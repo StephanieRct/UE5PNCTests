@@ -4,6 +4,18 @@
 #include "ChunkPointerComponentTest.h"
 #include "UE5PNC/public/PncDefault.h"
 
+#define FIXSTART(FixtureType) FixtureType fix; try { do{}while(0)
+
+#define FIXEND }\
+    catch (const FString& msg)\
+    {\
+        UTEST_TRUE(FString::Printf(TEXT("Unexpected FString exception: %s"), *msg), false);\
+    }\
+    catch (...)\
+    {\
+        UTEST_TRUE(TEXT("Unexpected unknown exception"), false);\
+    } return fix.Finalize(*this)
+
 
 constexpr int kTestConstructingValue = 99;
 constexpr int kTestWrintingValue = 50;
@@ -207,7 +219,7 @@ public:
     bool Failed;
 
     PncTestFixture()
-        : AllocationCountBefore(PNC::MemoryTracker<>::AllocationCount)
+        : AllocationCountBefore(PNC::MemoryTracker::AllocationCount)
         , Data(new PncTestData())
         , Failed(false)
     {
@@ -217,16 +229,16 @@ public:
     PncTestFixture& operator=(const PncTestFixture& o) = delete;
     PncTestFixture(PncTestFixture&& o) = delete;
     PncTestFixture& operator=(PncTestFixture&& o) = delete;
-    ~PncTestFixture()
-    {
-        ensureMsgf(Data == nullptr, TEXT("PncTestFixture::Finalize must be called before detroying the fixture."));
-    }
+    //~PncTestFixture()
+    //{
+    //    ensureMsgf(Data == nullptr, TEXT("PncTestFixture::Finalize must be called before detroying the fixture."));
+    //}
 
     bool Finalize(FAutomationTestBase& test)
     {
         delete Data;
         Data = nullptr;
-        if (!test.TestEqual(TEXT("Remaining allocations should be 0"), PNC::MemoryTracker<>::AllocationCount, AllocationCountBefore))
+        if (!test.TestEqual(TEXT("Remaining allocations count"), PNC::MemoryTracker::AllocationCount, AllocationCountBefore))
             return false;
         //if (PNC::MemoryTracker<>::AllocationCount != 0)
         //{
@@ -261,10 +273,71 @@ using Data = PncTestData;
 using Fix = PncTestFixture;
 using FixChunk = PncTestFixtureChunk;
 
+void TestAssert()
+{
+    pnc_assert(false == true);
+}
+void TestAssertf(int a)
+{
+    pnc_assertf(false == true, TEXT("This is my assertf with argument of value '%d'"), a);
+}
+void TestAssertNoEntry()
+{
+    pnc_assert_no_entry_return();
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Fixture_Exceptions, "Pnc.0Fixture.Exceptions", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Fixture_Exceptions::RunTest(const FString& Parameters)
+{
+    try
+    {
+        TestAssert();
+        UTEST_TRUE(TEXT("pnc_assert must throw an execption"), false);
+    }
+    catch (const FString& msg)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Catch execption '%s'"), *msg);
+    }
+    catch(...)
+    {
+        UTEST_TRUE(TEXT("pnc_assert throws unknown execption, should be a FString"), false);
+    }
+
+    try
+    {
+        TestAssertf(5);
+        UTEST_TRUE(TEXT("pnc_assertf must throw an execption"), false);
+    }
+    catch (const FString& msg)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Catch execption '%s'"), *msg);
+    }
+    catch (...)
+    {
+        UTEST_TRUE(TEXT("pnc_assertf throws unknown execption, should be a FString"), false);
+    }
+
+    try
+    {
+        TestAssertNoEntry();
+        UTEST_TRUE(TEXT("pnc_assert_no_entry_return must throw an execption"), false);
+    }
+    catch (const FString& msg)
+    {
+        UE_LOG(LogTemp, Log, TEXT("Catch execption '%s'"), *msg);
+    }
+    catch (...)
+    {
+        UTEST_TRUE(TEXT("pnc_assert_no_entry_return throws unknown execption, should be a FString"), false);
+    }
+
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Fixture_Data, "Pnc.0Fixture.Data", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool TestPnc_Fixture_Data::RunTest(const FString& Parameters)
 {
-    Fix fix;
+    FIXSTART(Fix);
     UTEST_EQUAL(TEXT("StructureA Component Type A index"), fix.Data->StructureA.GetComponentTypeIndexInChunk(&fix.Data->ComponentTypeA), 0);
     UTEST_EQUAL(TEXT("StructureB Component Type B index"), fix.Data->StructureB.GetComponentTypeIndexInChunk(&fix.Data->ComponentTypeB), 0);
     UTEST_EQUAL(TEXT("StructureV Component Type V index"), fix.Data->StructureV.GetComponentTypeIndexInChunk(&fix.Data->ComponentTypeV), 0);
@@ -297,235 +370,467 @@ bool TestPnc_Fixture_Data::RunTest(const FString& Parameters)
     UTEST_GREATER_EQUAL(TEXT("StructureABVW Component Type B index"), fix.Data->StructureABVW.GetComponentTypeIndexInChunk(&fix.Data->ComponentTypeB), 0);
     UTEST_GREATER_EQUAL(TEXT("StructureABVW Component Type V index"), fix.Data->StructureABVW.GetComponentTypeIndexInChunk(&fix.Data->ComponentTypeV), 0);
     UTEST_GREATER_EQUAL(TEXT("StructureABVW Component Type W index"), fix.Data->StructureABVW.GetComponentTypeIndexInChunk(&fix.Data->ComponentTypeW), 0);
-
-    return fix.Finalize(*this);
+    
+    FIXEND;
 }
 
-#pragma region New
-// TODO New NullChunk
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_New_NodeComponentPod, "Pnc.1Chunk.0New.NodeComponentPod", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_New_NodeComponentPod::RunTest(const FString& Parameters)
-{		
-    Fix fix;
-    auto* chunk = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Has Chunk"), !!chunk);
-    UTEST_EQUAL(TEXT("Node Capacity"), chunk->GetNodeCapacity(), kTestNodeCapacity);
-    UTEST_EQUAL(TEXT("Node Count"), chunk->GetNodeCount(), kTestNodeCount);
+template<typename TChunk>
+bool ChunkIsValidStructData(FAutomationTestBase& test, TChunk* const  chunk, const PNC::Size_t nodeCount, const PNC::Size_t nodeCapacity)
+{
+    if (!test.TestTrue(TEXT("Chunk is allocated"), !!chunk))
+        return false;
 
-    auto* componentDataA = chunk->GetComponentData<Fix::A>();
-    UTEST_TRUE(TEXT("Has Node Component A"), !!componentDataA);
+    if (!test.TestTrue(TEXT("Chunk is StructData"), chunk->IsStructData()))
+        return false;
 
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        componentDataA[i].Value = kTestWrintingValue;
+    if (!test.TestEqual(TEXT("Chunk's Node Count"), chunk->GetNodeCount(), nodeCount))
+        return false;
 
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        UTEST_EQUAL(TEXT("Write/Read Node Component"), componentDataA[i].Value, kTestWrintingValue);
+    if (!test.TestEqual(TEXT("Chunk's Node Capacity"), chunk->GetNodeCapacity(), nodeCapacity))
+        return false;
+
+    auto& internalChunk = PNC::ChunkPointer::GetInternalChunk(*chunk);
+    auto componentTypeCount = internalChunk.Structure->GetComponentCount();
+
+    if (!test.TestTrue(TEXT("Chunk has valid ComponentDataArray Memory"), pnc_owns(internalChunk.ComponentData, componentTypeCount)))
+        return false;
+    for (PNC::Size_t i = 0; i < componentTypeCount; ++i)
+    {
+        const auto* componentType = internalChunk.Structure->Components[i];
+        uint8* begin = (uint8*) internalChunk.ComponentData[i];
+        PNC::Size_t size = 0;
+
+        switch (componentType->GetOwner())
+        {
+            case PNC::ComponentOwner_Node:
+                size = internalChunk.NodeCount * componentType->GetSize();
+                break;
+            case PNC::ComponentOwner_Chunk:
+                size = componentType->GetSize();
+                break;
+            default:
+                pnc_assert_no_entry_return(false);
+        }
+
+        if (!test.TestTrue(TEXT("Chunk has valid ComponentData Memory"), pnc_owns(begin, size)))
+            return false;
+    }
+}
+
+#define TEST_VALID_CHUNK_VOIDNULL(chunk) \
+    UTEST_TRUE(TEXT(#chunk " is VoidNull"), chunk->IsVoidNull());\
+    UTEST_EQUAL(TEXT("VoidNull Chunk '" #chunk "' NodeCount"), chunk->GetNodeCount(), kTest0)
+
+#define TEST_VALID_CHUNK_STRUCTDATA(chunk, nodeCount, nodeCapacity)\
+    {\
+        UTEST_TRUE(TEXT("Chunk is allocated"), !!chunk);\
+        UTEST_TRUE(TEXT("Chunk is StructData"), chunk->IsStructData());\
+        UTEST_EQUAL(TEXT("Chunk's Node Count"), chunk->GetNodeCount(), nodeCount);\
+        UTEST_EQUAL(TEXT("Chunk's Node Capacity"), chunk->GetNodeCapacity(), nodeCapacity);\
+        \
+        auto& internalChunk = PNC::ChunkPointer::GetInternalChunk(*chunk);\
+        auto componentTypeCount = internalChunk.Structure->GetComponentCount();\
+        \
+        UTEST_TRUE(TEXT("Chunk has valid ComponentDataArray Memory"), pnc_owns(internalChunk.ComponentData, componentTypeCount));\
+        \
+        for (PNC::Size_t i = 0; i < componentTypeCount; ++i)\
+        {\
+            const auto* componentType = internalChunk.Structure->Components[i];\
+            uint8* begin = (uint8*)internalChunk.ComponentData[i];\
+            PNC::Size_t size = 0;\
+            \
+            switch (componentType->GetOwner())\
+            {\
+            case PNC::ComponentOwner_Node:\
+                size = internalChunk.NodeCount * componentType->GetSize();\
+                break;\
+            case PNC::ComponentOwner_Chunk:\
+                size = componentType->GetSize();\
+                break;\
+            default:\
+                pnc_assert_no_entry_return(false);\
+            }\
+            \
+            UTEST_TRUE(TEXT("Chunk has valid ComponentData Memory"), pnc_owns(begin, size));\
+        }\
+    }do{}while(0)
+
+#define WRITE_COMPONENT(chunk, ComponentType, count, value)\
+    {\
+        auto* componentData = chunk->GetComponentData<ComponentType>();\
+        UTEST_TRUE(TEXT(#chunk " Has Component " #ComponentType), !!componentData);\
+        for (PNC::Size_t i = 0; i < count; ++i)\
+            componentData[i].Value = value;\
+    }do{}while(0)
+
+#define TEST_COMPONENT_VALUE(afterWhat, chunk, ComponentType, count, value)\
+    {\
+        auto* componentData = chunk->GetComponentData<ComponentType>();\
+        UTEST_TRUE(TEXT(#chunk " Has Component " #ComponentType), !!componentData);\
+        for (PNC::Size_t i = 0; i < count; ++i)\
+            UTEST_EQUAL(TEXT("Value after " afterWhat), componentData[i].Value, value);\
+    }do{}while(0)
+
+#pragma region ChunkPointer New
+// TODO New VoidData
+// TODO New StructVoid
+// TODO New StructData
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_New_TrivialNodeComponent, "Pnc.1-ChunkPointer.0-New.VoidNull", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_New_TrivialNodeComponent::RunTest(const FString& Parameters)
+{
+    FIXSTART(Fix);
+    auto* chunk = new PNC::ChunkPointer();
+    UTEST_TRUE (TEXT("Chunk is Void"),       chunk->IsVoid());
+    UTEST_TRUE (TEXT("Chunk is Null"),       chunk->IsNull());
+    UTEST_FALSE(TEXT("Chunk is Struct"),     chunk->IsStruct());
+    UTEST_FALSE(TEXT("Chunk is Data"),       chunk->IsData());
+    UTEST_TRUE (TEXT("Chunk is VoidNull"),   chunk->IsVoidNull());
+    UTEST_FALSE(TEXT("Chunk is VoidData"),   chunk->IsVoidData());
+    UTEST_FALSE(TEXT("Chunk is StructNull"), chunk->IsStructNull());
+    UTEST_FALSE(TEXT("Chunk is StructData"), chunk->IsStructData());
 
     delete chunk;
-	return fix.Finalize(*this);
+    FIXEND;
 }
+#pragma endregion
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_New_ChunkComponentPod, "Pnc.1Chunk.0New.ChunkComponentPod", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_New_ChunkComponentPod::RunTest(const FString& Parameters)
+#pragma region Chunk New
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_New_TrivialChunkComponent, "Pnc.2Chunk.0New.TrivialChunkComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_New_TrivialChunkComponent::RunTest(const FString& Parameters)
 {
-    Fix fix;
+    FIXSTART(Fix);
     auto* chunk = new PNC::Chunk(&fix.Data->StructureV, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Has Chunk"), !!chunk);
-    auto& internalChunk = PNC::Chunk::GetInternalChunk(*chunk);
-    UTEST_EQUAL(TEXT("Node Capacity"), chunk->GetNodeCapacity(), kTestNodeCapacity);
-    UTEST_EQUAL(TEXT("Node Count"), chunk->GetNodeCount(), kTestNodeCount);
+    TEST_VALID_CHUNK_STRUCTDATA(chunk, kTestNodeCount, kTestNodeCapacity);
 
     auto* componentDataV = chunk->GetComponentData<Fix::V>();
-    UTEST_TRUE(TEXT("Has Chunk Component V"), !!componentDataV);
-
-    componentDataV[0].Value = kTestWrintingValue;
-    UTEST_EQUAL(TEXT("Write/Read Chunk Component"), componentDataV[0].Value, kTestWrintingValue);
+    UTEST_TRUE(TEXT("Chunk has ChunkComponent V"), !!componentDataV);
 
     delete chunk;
-    return fix.Finalize(*this);
+    FIXEND;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_New_NodeComponentCtorDtor, "Pnc.1Chunk.0New.NodeComponentCtorDtor", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_New_NodeComponentCtorDtor::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_New_NonTrivialNodeComponent, "Pnc.2Chunk.0New.NonTrivialNodeComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_New_NonTrivialNodeComponent::RunTest(const FString& Parameters)
 {
-    Fix fix;
+    FIXSTART(Fix);
     auto* chunk = new PNC::Chunk(&fix.Data->StructureB, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Has Chunk"), !!chunk);
-    UTEST_EQUAL(TEXT("Must call Component B constructor"), CallCounter::Instance.B.Ctor, kTestNodeCount);
-    UTEST_EQUAL(TEXT("Must not call Component B destructor"), CallCounter::Instance.B.Dtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B copy constructor"), CallCounter::Instance.B.CopyCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B move constructor"), CallCounter::Instance.B.MoveCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B copy assignment"), CallCounter::Instance.B.CopyAssign, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B move assignment"), CallCounter::Instance.B.MoveAssign, kTest0);
+    TEST_VALID_CHUNK_STRUCTDATA(chunk, kTestNodeCount, kTestNodeCapacity);
+    UTEST_EQUAL(TEXT("Calls to Component B constructor"),       CallCounter::Instance.B.Ctor,       kTestNodeCount);
+    UTEST_EQUAL(TEXT("Calls to Component B destructor"),        CallCounter::Instance.B.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component B copy constructor"),  CallCounter::Instance.B.CopyCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component B move constructor"),  CallCounter::Instance.B.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component B copy assignment"),   CallCounter::Instance.B.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component B move assignment"),   CallCounter::Instance.B.MoveAssign, kTest0);
     ResetCallCounter();
 
     auto* componentDataB = chunk->GetComponentData<Fix::B>();
-    UTEST_TRUE(TEXT("Has NodeComponent B"), !!componentDataB);
+    UTEST_TRUE(TEXT("Chunk has NodeComponent B"), !!componentDataB);
+
     for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        UTEST_EQUAL(TEXT("Read Contructed Node Component Value"), componentDataB[i].Value, kTestConstructingValue);
+        UTEST_EQUAL(TEXT("Contructed Node Component Value"), componentDataB[i].Value, kTestConstructingValue);
 
     delete chunk;
-    UTEST_EQUAL(TEXT("Must not call Component B constructor"), CallCounter::Instance.B.Ctor, kTest0);
-    UTEST_EQUAL(TEXT("Must call Component B destructor"), CallCounter::Instance.B.Dtor, kTestNodeCount);
-    UTEST_EQUAL(TEXT("Must not call Component B copy constructor"), CallCounter::Instance.B.CopyCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B move constructor"), CallCounter::Instance.B.MoveCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B copy assignment"), CallCounter::Instance.B.CopyAssign, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B move assignment"), CallCounter::Instance.B.MoveAssign, kTest0);
-    return fix.Finalize(*this);
+    UTEST_EQUAL(TEXT("Calls to Component B constructor"),       CallCounter::Instance.B.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component B destructor"),        CallCounter::Instance.B.Dtor,       kTestNodeCount);
+    UTEST_EQUAL(TEXT("Calls to Component B copy constructor"),  CallCounter::Instance.B.CopyCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component B move constructor"),  CallCounter::Instance.B.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component B copy assignment"),   CallCounter::Instance.B.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component B move assignment"),   CallCounter::Instance.B.MoveAssign, kTest0);
+    FIXEND;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_New_ChunkComponentCtorDtor, "Pnc.1Chunk.0New.ChunkComponentCtorDtor", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_New_ChunkComponentCtorDtor::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_New_NonTrivialChunkComponent, "Pnc.2Chunk.0New.NonTrivialChunkComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_New_NonTrivialChunkComponent::RunTest(const FString& Parameters)
 {
-    Fix fix;
+    FIXSTART(Fix);
     auto* chunk = new PNC::Chunk(&fix.Data->StructureW, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Has Chunk"), !!chunk);
-    UTEST_EQUAL(TEXT("Must call Component W constructor"), CallCounter::Instance.W.Ctor, kTest1);
-    UTEST_EQUAL(TEXT("Must not call Component W destructor"), CallCounter::Instance.W.Dtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W copy constructor"), CallCounter::Instance.W.CopyCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W move constructor"), CallCounter::Instance.W.MoveCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W copy assignment"), CallCounter::Instance.W.CopyAssign, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W move assignment"), CallCounter::Instance.W.MoveAssign, kTest0);
+    TEST_VALID_CHUNK_STRUCTDATA(chunk, kTestNodeCount, kTestNodeCapacity);
+    UTEST_EQUAL(TEXT("Calls to Component W constructor"),       CallCounter::Instance.W.Ctor,       kTest1);
+    UTEST_EQUAL(TEXT("Calls to Component W destructor"),        CallCounter::Instance.W.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component W copy constructor"),  CallCounter::Instance.W.CopyCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component W move constructor"),  CallCounter::Instance.W.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component W copy assignment"),   CallCounter::Instance.W.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component W move assignment"),   CallCounter::Instance.W.MoveAssign, kTest0);
     ResetCallCounter();
 
     auto* componentDataW = chunk->GetComponentData<Fix::W>();
     UTEST_TRUE(TEXT("Has ChunkComponent W"), !!componentDataW);
+
     for (PNC::Size_t i = 0; i < kTest1; ++i)
         UTEST_EQUAL(TEXT("Read Contructed Chunk Component Value"), componentDataW[i].Value, kTestConstructingValue);
 
     delete chunk;
-    UTEST_EQUAL(TEXT("Must not call Component W constructor"), CallCounter::Instance.W.Ctor, kTest0);
-    UTEST_EQUAL(TEXT("Must call Component W destructor"), CallCounter::Instance.W.Dtor, kTest1);
-    UTEST_EQUAL(TEXT("Must not call Component W copy constructor"), CallCounter::Instance.W.CopyCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W move constructor"), CallCounter::Instance.W.MoveCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W copy assignment"), CallCounter::Instance.W.CopyAssign, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W move assignment"), CallCounter::Instance.W.MoveAssign, kTest0);
-    return fix.Finalize(*this);
+    UTEST_EQUAL(TEXT("Calls to Component W constructor"),       CallCounter::Instance.W.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component W destructor"),        CallCounter::Instance.W.Dtor,       kTest1);
+    UTEST_EQUAL(TEXT("Calls to Component W copy constructor"),  CallCounter::Instance.W.CopyCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component W move constructor"),  CallCounter::Instance.W.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component W copy assignment"),   CallCounter::Instance.W.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to Component W move assignment"),   CallCounter::Instance.W.MoveAssign, kTest0);
+    FIXEND;
 }
 
 #pragma endregion
 
 
+#pragma region MoveConstructor
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_MoveConstruction, "Pnc.2-Chunk.1-MoveConstruction", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_MoveConstruction::RunTest(const FString& Parameters)
+{
+    FIXSTART(Fix);
+    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureABVW, kTestNodeCapacity, kTestNodeCount);
+    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+
+    // Set data to copy from with a known value to test the copy.
+    WRITE_COMPONENT(chunkFrom, Fix::A, kTestNodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::B, kTestNodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::V, kTest1,         kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::W, kTest1,         kTestWrintingValue);
+    
+    ResetCallCounter();
+    auto allocationCountBefore = pnc_allocation_count;
+    auto* chunkTo = new PNC::Chunk(std::move(*chunkFrom));
+    
+    UTEST_EQUAL(TEXT("Allocation count"), pnc_allocation_count - allocationCountBefore, (std::size_t)0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move constructor"),   CallCounter::Instance.B.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy assignment"),    CallCounter::Instance.B.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move assignment"),    CallCounter::Instance.B.MoveAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent constructor"),       CallCounter::Instance.W.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent destructor"),        CallCounter::Instance.W.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy constructor"),  CallCounter::Instance.W.CopyCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),  CallCounter::Instance.W.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),   CallCounter::Instance.W.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kTest0);
+    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+    TEST_VALID_CHUNK_VOIDNULL(chunkFrom);
+
+    TEST_COMPONENT_VALUE("Move Construction TrivialNodeComponent",      chunkTo, Fix::A, kTestNodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialNodeComponent",   chunkTo, Fix::B, kTestNodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction TrivialChunkComponent",     chunkTo, Fix::V, kTest1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialChunkComponent",  chunkTo, Fix::W, kTest1,         kTestWrintingValue);
+
+    delete chunkTo;
+    delete chunkFrom;
+
+    FIXEND;
+}
+#pragma endregion
+
+#pragma region MoveAssginment
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_MoveAssignment, "Pnc.2-Chunk.2-MoveAssignment", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_MoveAssignment::RunTest(const FString& Parameters)
+{
+    FIXSTART(Fix);
+    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureABVW, kTestNodeCapacity, kTestNodeCount);
+    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+
+    // Set data to copy from with a known value to test the copy.
+    WRITE_COMPONENT(chunkFrom, Fix::A, kTestNodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::B, kTestNodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::V, kTest1,         kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::W, kTest1,         kTestWrintingValue);
+
+    auto* chunkTo = new PNC::Chunk();
+    TEST_VALID_CHUNK_VOIDNULL(chunkTo);
+
+    ResetCallCounter();
+    auto allocationCountBefore = pnc_allocation_count;
+    *chunkTo = std::move(*chunkFrom);
+    UTEST_EQUAL(TEXT("Allocation count"), pnc_allocation_count - allocationCountBefore, (std::size_t)0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move constructor"),   CallCounter::Instance.B.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy assignment"),    CallCounter::Instance.B.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move assignment"),    CallCounter::Instance.B.MoveAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent constructor"),       CallCounter::Instance.W.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent destructor"),        CallCounter::Instance.W.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy constructor"),  CallCounter::Instance.W.CopyCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),  CallCounter::Instance.W.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),   CallCounter::Instance.W.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kTest0);
+    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+    TEST_VALID_CHUNK_VOIDNULL(chunkFrom);
+
+    TEST_COMPONENT_VALUE("Move Construction TrivialNodeComponent",      chunkTo, Fix::A, kTestNodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialNodeComponent",   chunkTo, Fix::B, kTestNodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction TrivialChunkComponent",     chunkTo, Fix::V, kTest1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialChunkComponent",  chunkTo, Fix::W, kTest1,         kTestWrintingValue);
+
+    delete chunkTo;
+    delete chunkFrom;
+
+    FIXEND;
+}
+#pragma endregion
 
 #pragma region CopyConstructor
 // TODO CopyConstruct from NullChunk
 // TODO CopyConstruct To NullChunk
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction_NodeComponentPod, "Pnc.1Chunk.1CopyConstruction.NodeComponentPod", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_CopyConstruction_NodeComponentPod::RunTest(const FString& Parameters)
-{
-    Fix fix;
-    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Has Chunk from"), !!chunkFrom);
 
-    auto* componentDataAFrom = chunkFrom->GetComponentData<Fix::A>();
-    UTEST_TRUE(TEXT("ChunkFrom Has Node Component A"), !!componentDataAFrom);
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction, "Pnc.2-Chunk.3-CopyConstruction", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_CopyConstruction::RunTest(const FString& Parameters)
+{
+    FIXSTART(Fix);
+    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureABVW, kTestNodeCapacity, kTestNodeCount);
+    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
 
     // Set data to copy from with a known value to test the copy.
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        componentDataAFrom[i].Value = kTestWrintingValue;
-
-    auto* chunkTo = new PNC::Chunk(*chunkFrom);
-    UTEST_TRUE(TEXT("Has Chunk To"), !!chunkTo);
-
-    auto* componentDataATo = chunkTo->GetComponentData<Fix::A>();
-    UTEST_TRUE(TEXT("ChunkTo Has Node Component A"), !!componentDataATo);
-
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        UTEST_EQUAL(TEXT("Copied Data of Node Component A"), componentDataATo[i].Value, kTestWrintingValue);
-
-    delete chunkTo;
-    delete chunkFrom;
-    return fix.Finalize(*this);
-}
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction_ChunkComponentPod, "Pnc.1Chunk.1CopyConstruction.ChunkComponentPod", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_CopyConstruction_ChunkComponentPod::RunTest(const FString& Parameters)
-{
-    Fix fix;
-    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureV, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Has Chunk from"), !!chunkFrom);
-
-    auto* componentDataVFrom = chunkFrom->GetComponentData<Fix::V>();
-    UTEST_TRUE(TEXT("ChunkFrom Has Chunk Component V"), !!componentDataVFrom);
-
-    // Set data to copy from with a known value to test the copy.
-    componentDataVFrom[0].Value = kTestWrintingValue;
-
-    auto* chunkTo = new PNC::Chunk(*chunkFrom);
-    UTEST_TRUE(TEXT("Has Chunk To"), !!chunkTo);
-
-    auto* componentDataVTo = chunkTo->GetComponentData<Fix::V>();
-    UTEST_TRUE(TEXT("ChunkTo Has Chunk Component V"), !!componentDataVTo);
-
-    UTEST_EQUAL(TEXT("Copied Data of Chunk Component V"), componentDataVTo[0].Value, kTestWrintingValue);
-
-    delete chunkTo;
-    delete chunkFrom;
-    return fix.Finalize(*this);
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction_NodeComponentCopyConstructor, "Pnc.1Chunk.1CopyConstruction.NodeComponentCopyConstructor", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_CopyConstruction_NodeComponentCopyConstructor::RunTest(const FString& Parameters)
-{
-    Fix fix;
-    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureB, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Has Chunk from"), !!chunkFrom);
-
-    auto* componentDataBFrom = chunkFrom->GetComponentData<Fix::B>();
-    UTEST_TRUE(TEXT("ChunkFrom Has Node Component B"), !!componentDataBFrom);
-
-    // Overwrite data to copy from with different value so it copies over the kTestConstructingValue set by the default constructor.
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        componentDataBFrom[i].Value = kTestWrintingValue;
+    WRITE_COMPONENT(chunkFrom, Fix::A, kTestNodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::B, kTestNodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::V, kTest1,         kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::W, kTest1,         kTestWrintingValue);
 
     ResetCallCounter();
     auto* chunkTo = new PNC::Chunk(*chunkFrom);
-    UTEST_TRUE(TEXT("Has Chunk To"), !!chunkTo);
-    auto* componentDataBTo = chunkTo->GetComponentData<Fix::B>();
-    UTEST_TRUE(TEXT("ChunkTo Has Node Component B"), !!componentDataBTo);
-    UTEST_EQUAL(TEXT("Must not call Component B constructor"), CallCounter::Instance.B.Ctor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B destructor"), CallCounter::Instance.B.Dtor, kTest0);
-    UTEST_EQUAL(TEXT("Must call Component B copy constructor"), CallCounter::Instance.B.CopyCtor, kTestNodeCount);
-    UTEST_EQUAL(TEXT("Must not call Component B move constructor"), CallCounter::Instance.B.MoveCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B copy assignment"), CallCounter::Instance.B.CopyAssign, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B move assignment"), CallCounter::Instance.B.MoveAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kTestNodeCount);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move constructor"),   CallCounter::Instance.B.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy assignment"),    CallCounter::Instance.B.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move assignment"),    CallCounter::Instance.B.MoveAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent constructor"),       CallCounter::Instance.W.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent destructor"),        CallCounter::Instance.W.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy constructor"),  CallCounter::Instance.W.CopyCtor,   kTest1);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),  CallCounter::Instance.W.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),   CallCounter::Instance.W.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kTest0);
+    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
 
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        UTEST_EQUAL(TEXT("Copied Data of Node Component B"), componentDataBTo[i].Value, kTestWrintingValue);
-
-    delete chunkTo;
-    delete chunkFrom;
-    return fix.Finalize(*this);
-}
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction_ChunkComponentCopyConstructor, "Pnc.1Chunk.1CopyConstruction.ChunkComponentCopyConstructor", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_CopyConstruction_ChunkComponentCopyConstructor::RunTest(const FString& Parameters)
-{
-    Fix fix;
-    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureW, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Has Chunk from"), !!chunkFrom);
-
-    auto* componentDataWFrom = chunkFrom->GetComponentData<Fix::W>();
-    UTEST_TRUE(TEXT("ChunkFrom Has Node Component W"), !!componentDataWFrom);
-
-    // Overwrite data to copy from with different value so it copies over the kTestConstructingValue set by the default constructor.
-    componentDataWFrom[0].Value = kTestWrintingValue;
-
-    ResetCallCounter();
-    auto* chunkTo = new PNC::Chunk(*chunkFrom);
-    UTEST_TRUE(TEXT("Has Chunk To"), !!chunkTo);
-    auto* componentDataWTo = chunkTo->GetComponentData<Fix::W>();
-    UTEST_TRUE(TEXT("ChunkTo Has Node Component W"), !!componentDataWTo);
-    UTEST_EQUAL(TEXT("Must not call Component W constructor"), CallCounter::Instance.W.Ctor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W destructor"), CallCounter::Instance.W.Dtor, kTest0);
-    UTEST_EQUAL(TEXT("Must call Component W copy constructor"), CallCounter::Instance.W.CopyCtor, kTest1);
-    UTEST_EQUAL(TEXT("Must not call Component W move constructor"), CallCounter::Instance.W.MoveCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W copy assignment"), CallCounter::Instance.W.CopyAssign, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W move assignment"), CallCounter::Instance.W.MoveAssign, kTest0);
-
-    UTEST_EQUAL(TEXT("Copied Data of Node Component W"), componentDataWTo[0].Value, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Construction TrivialNodeComponent",      chunkTo, Fix::A, kTestNodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Construction NonTrivialNodeComponent",   chunkTo, Fix::B, kTestNodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Construction TrivialChunkComponent",     chunkTo, Fix::V, kTest1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Construction NonTrivialChunkComponent",  chunkTo, Fix::W, kTest1,         kTestWrintingValue);
 
     delete chunkTo;
     delete chunkFrom;
-    return fix.Finalize(*this);
+
+    FIXEND;
 }
+//
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction_TrivialNodeComponent, "Pnc.2Chunk.1CopyConstruction.TrivialNodeComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPnc_Chunk_CopyConstruction_TrivialNodeComponent::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+//
+//    // Set data to copy from with a known value to test the copy.
+//    WRITE_COMPONENT(chunkFrom, Fix::A, kTestNodeCount, kTestWrintingValue);
+//
+//    auto* chunkTo = new PNC::Chunk(*chunkFrom);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataATo = chunkTo->GetComponentData<Fix::A>();
+//    UTEST_TRUE(TEXT("ChunkTo Has Node Component A"), !!componentDataATo);
+//
+//    TEST_COMPONENT_VALUE("Copy Construction", chunkTo, Fix::A, kTestNodeCount, kTestWrintingValue);
+//
+//    delete chunkTo;
+//    delete chunkFrom;
+//    
+//    FIXEND;
+//}
+//
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction_TrivialChunkComponent, "Pnc.2Chunk.1CopyConstruction.TrivialChunkComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPnc_Chunk_CopyConstruction_TrivialChunkComponent::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureV, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataVFrom = chunkFrom->GetComponentData<Fix::V>();
+//    UTEST_TRUE(TEXT("ChunkFrom Has Chunk Component V"), !!componentDataVFrom);
+//
+//    // Set data to copy from with a known value to test the copy.
+//    componentDataVFrom[0].Value = kTestWrintingValue;
+//
+//    auto* chunkTo = new PNC::Chunk(*chunkFrom);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataVTo = chunkTo->GetComponentData<Fix::V>();
+//    UTEST_TRUE(TEXT("ChunkTo Has Chunk Component V"), !!componentDataVTo);
+//
+//    UTEST_EQUAL(TEXT("Copied Data of Chunk Component V"), componentDataVTo[0].Value, kTestWrintingValue);
+//
+//    delete chunkTo;
+//    delete chunkFrom;
+//    FIXEND;
+//}
+//
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction_NonTrivialNodeComponent, "Pnc.2Chunk.1CopyConstruction.NonTrivialNodeComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPnc_Chunk_CopyConstruction_NonTrivialNodeComponent::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureB, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataBFrom = chunkFrom->GetComponentData<Fix::B>();
+//    UTEST_TRUE(TEXT("ChunkFrom Has Node Component B"), !!componentDataBFrom);
+//
+//    // Overwrite data to copy from with different value so it copies over the kTestConstructingValue set by the default constructor.
+//    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
+//        componentDataBFrom[i].Value = kTestWrintingValue;
+//
+//    ResetCallCounter();
+//    auto* chunkTo = new PNC::Chunk(*chunkFrom);
+//    UTEST_EQUAL(TEXT("Calls to Component B constructor"),       CallCounter::Instance.B.Ctor,       kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component B destructor"),        CallCounter::Instance.B.Dtor,       kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component B copy constructor"),  CallCounter::Instance.B.CopyCtor,   kTestNodeCount);
+//    UTEST_EQUAL(TEXT("Calls to Component B move constructor"),  CallCounter::Instance.B.MoveCtor,   kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component B copy assignment"),   CallCounter::Instance.B.CopyAssign, kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component B move assignment"),   CallCounter::Instance.B.MoveAssign, kTest0);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataBTo = chunkTo->GetComponentData<Fix::B>();
+//    UTEST_TRUE(TEXT("ChunkTo Has Node Component B"), !!componentDataBTo);
+//    
+//
+//    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
+//        UTEST_EQUAL(TEXT("Copied Data of Node Component B"), componentDataBTo[i].Value, kTestWrintingValue);
+//
+//    delete chunkTo;
+//    delete chunkFrom;
+//    
+//    FIXEND;
+//}
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyConstruction_NonTrivialChunkComponent, "Pnc.2Chunk.1CopyConstruction.NonTrivialChunkComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPnc_Chunk_CopyConstruction_NonTrivialChunkComponent::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureW, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataWFrom = chunkFrom->GetComponentData<Fix::W>();
+//    UTEST_TRUE(TEXT("ChunkFrom Has ChunkComponent W"), !!componentDataWFrom);
+//
+//    // Overwrite data to copy from with different value so it copies over the kTestConstructingValue set by the default constructor.
+//    componentDataWFrom[0].Value = kTestWrintingValue;
+//
+//    ResetCallCounter();
+//    auto* chunkTo = new PNC::Chunk(*chunkFrom);
+//    UTEST_EQUAL(TEXT("Calls to Component W constructor"),       CallCounter::Instance.W.Ctor,       kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component W destructor"),        CallCounter::Instance.W.Dtor,       kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component W copy constructor"),  CallCounter::Instance.W.CopyCtor,   kTest1);
+//    UTEST_EQUAL(TEXT("Calls to Component W move constructor"),  CallCounter::Instance.W.MoveCtor,   kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component W copy assignment"),   CallCounter::Instance.W.CopyAssign, kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component W move assignment"),   CallCounter::Instance.W.MoveAssign, kTest0);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataWTo = chunkTo->GetComponentData<Fix::W>();
+//    UTEST_TRUE(TEXT("ChunkTo Has ChunkComponent W"), !!componentDataWTo);
+//
+//    UTEST_EQUAL(TEXT("Copied Data of Node Component W"), componentDataWTo[0].Value, kTestWrintingValue);
+//
+//    delete chunkTo;
+//    delete chunkFrom;
+//    
+//    FIXEND;
+//}
 
 #pragma endregion
 
@@ -537,160 +842,213 @@ bool TestPnc_Chunk_CopyConstruction_ChunkComponentCopyConstructor::RunTest(const
 // Copy from NullChunk
 // Copy to NullChunk
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_NodeComponentPod, "Pnc.1Chunk.2CopyAssignment.NodeComponentPod", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_CopyAssignment_NodeComponentPod::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment, "Pnc.2-Chunk.4-CopyAssignment", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_CopyAssignment::RunTest(const FString& Parameters)
 {
-    Fix fix;
-    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Valid Chunk from"), !!chunkFrom);
-
-    auto* componentDataAFrom = chunkFrom->GetComponentData<Fix::A>();
-    UTEST_TRUE(TEXT("ChunkFrom has NodeComponent A"), !!componentDataAFrom);
+    FIXSTART(Fix);
+    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureABVW, kTestNodeCapacity, kTestNodeCount);
+    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
 
     // Set data to copy from with a known value to test the copy.
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        componentDataAFrom[i].Value = kTestWrintingValue;
+    WRITE_COMPONENT(chunkFrom, Fix::A, kTestNodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::B, kTestNodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::V, kTest1,         kTestWrintingValue);
+    WRITE_COMPONENT(chunkFrom, Fix::W, kTest1,         kTestWrintingValue);
 
-    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Valid Chunk To"), !!chunkTo);
-
-    // Copy assign
-    *chunkTo = *chunkFrom;
-
-    auto* componentDataATo = chunkTo->GetComponentData<Fix::A>();
-    UTEST_TRUE(TEXT("ChunkTo has NodeComponent A"), !!componentDataATo);
-
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        UTEST_EQUAL(TEXT("Data for NodeComponent A must be copied"), componentDataATo[i].Value, kTestWrintingValue);
-
-    delete chunkTo;
-    delete chunkFrom;
-    return fix.Finalize(*this);
-}
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_ChunkComponentPod, "Pnc.1Chunk.2CopyAssignment.ChunkComponentPod", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_CopyAssignment_ChunkComponentPod::RunTest(const FString& Parameters)
-{
-    Fix fix;
-    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureV, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Valid Chunk from"), !!chunkFrom);
-
-    auto* componentDataVFrom = chunkFrom->GetComponentData<Fix::V>();
-    UTEST_TRUE(TEXT("ChunkFrom has ChunkComponent V"), !!componentDataVFrom);
-
-    // Set data to copy from with a known value to test the copy.
-    componentDataVFrom[0].Value = kTestWrintingValue;
-
-    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Valid Chunk To"), !!chunkTo);
-
-    // Copy assign
-    *chunkTo = *chunkFrom;
-
-    auto* componentDataVTo = chunkTo->GetComponentData<Fix::V>();
-    UTEST_TRUE(TEXT("ChunkTo has Chunk Component V"), !!componentDataVTo);
-
-    UTEST_EQUAL(TEXT("Data for ChunkComponent V must be copied"), componentDataVTo[0].Value, kTestWrintingValue);
-
-    delete chunkTo;
-    delete chunkFrom;
-    return fix.Finalize(*this);
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_NodeComponentCopyConstructor, "Pnc.1Chunk.2CopyAssignment.NodeComponentCopyConstructor", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_CopyAssignment_NodeComponentCopyConstructor::RunTest(const FString& Parameters)
-{
-    Fix fix;
-    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureB, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Valid Chunk from"), !!chunkFrom);
-
-    auto* componentDataBFrom = chunkFrom->GetComponentData<Fix::B>();
-    UTEST_TRUE(TEXT("ChunkFrom has NodeComponent B"), !!componentDataBFrom);
-
-    // Overwrite data to copy from with different value so it copies over the kTestConstructingValue set by the default constructor.
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        componentDataBFrom[i].Value = kTestWrintingValue;
-
-    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Valid Chunk To"), !!chunkTo);
-
-    auto* componentDataBTo = chunkTo->GetComponentData<Fix::B>();
-    UTEST_TRUE(TEXT("ChunkTo has NodeComponent B"), !!componentDataBTo);
-
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        UTEST_EQUAL(TEXT("ChunkTo NodeComponent B must be constructed"), componentDataBTo[i].Value, kTestConstructingValue);
-
+    auto* chunkTo = new PNC::Chunk();
+    TEST_VALID_CHUNK_VOIDNULL(chunkTo);
 
     ResetCallCounter();
-    // Copy assign
     *chunkTo = *chunkFrom;
+    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kTestNodeCount);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move constructor"),   CallCounter::Instance.B.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy assignment"),    CallCounter::Instance.B.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move assignment"),    CallCounter::Instance.B.MoveAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent constructor"),       CallCounter::Instance.W.Ctor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent destructor"),        CallCounter::Instance.W.Dtor,       kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy constructor"),  CallCounter::Instance.W.CopyCtor,   kTest1);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),  CallCounter::Instance.W.MoveCtor,   kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),   CallCounter::Instance.W.CopyAssign, kTest0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kTest0);
+    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+    UTEST_TRUE(TEXT("ChunkTo is not the same data as ChunkFrom"), !PNC::ChunkPointer::IsSameData(*chunkTo, *chunkFrom));
 
-    UTEST_EQUAL(TEXT("Must not call Component B constructor"), CallCounter::Instance.B.Ctor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B destructor"), CallCounter::Instance.B.Dtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B copy constructor"), CallCounter::Instance.B.CopyCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component B move constructor"), CallCounter::Instance.B.MoveCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must call Component B copy assignment"), CallCounter::Instance.B.CopyAssign, kTestNodeCount);
-    UTEST_EQUAL(TEXT("Must not call Component B move assignment"), CallCounter::Instance.B.MoveAssign, kTest0);
-
-    componentDataBTo = chunkTo->GetComponentData<Fix::B>();
-    UTEST_TRUE(TEXT("ChunkTo has NodeComponent B"), !!componentDataBTo);
-
-    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
-        UTEST_EQUAL(TEXT("Data for NodeComponent B must be copied"), componentDataBTo[i].Value, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Assignment TrivialNodeComponent",      chunkTo, Fix::A, kTestNodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Assignment NonTrivialNodeComponent",   chunkTo, Fix::B, kTestNodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Assignment TrivialChunkComponent",     chunkTo, Fix::V, kTest1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Assignment NonTrivialChunkComponent",  chunkTo, Fix::W, kTest1,         kTestWrintingValue);
 
     delete chunkTo;
     delete chunkFrom;
-    return fix.Finalize(*this);
+
+    FIXEND;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_ChunkComponentCopyConstructor, "Pnc.1Chunk.2CopyAssignment.ChunkComponentCopyConstructor", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Chunk_CopyAssignment_ChunkComponentCopyConstructor::RunTest(const FString& Parameters)
-{
-    Fix fix;
-    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureW, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Valid Chunk from"), !!chunkFrom);
 
-    auto* componentDataWFrom = chunkFrom->GetComponentData<Fix::W>();
-    UTEST_TRUE(TEXT("ChunkFrom has ChunkComponent W"), !!componentDataWFrom);
-
-    // Overwrite data to copy from with different value so it copies over the kTestConstructingValue set by the default constructor.
-    componentDataWFrom[0].Value = kTestWrintingValue;
-
-    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
-    UTEST_TRUE(TEXT("Valid Chunk To"), !!chunkTo);
-
-    ResetCallCounter();
-    // Copy assign
-    *chunkTo = *chunkFrom;
-
-    UTEST_EQUAL(TEXT("Must not call Component W constructor"), CallCounter::Instance.W.Ctor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W destructor"), CallCounter::Instance.W.Dtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W copy constructor"), CallCounter::Instance.W.CopyCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must not call Component W move constructor"), CallCounter::Instance.W.MoveCtor, kTest0);
-    UTEST_EQUAL(TEXT("Must call Component W copy assignment"), CallCounter::Instance.W.CopyAssign, kTest1);
-    UTEST_EQUAL(TEXT("Must not call Component W move assignment"), CallCounter::Instance.W.MoveAssign, kTest0);
-
-    auto* componentDataWTo = chunkTo->GetComponentData<Fix::W>();
-    UTEST_TRUE(TEXT("ChunkTo has ChunkComponent W"), !!componentDataWTo);
-    UTEST_EQUAL(TEXT("Data for ChunkComponent W must be copied"), componentDataWTo[0].Value, kTestWrintingValue);
-
-    delete chunkTo;
-    delete chunkFrom;
-    return fix.Finalize(*this);
-}
+//
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_TrivialNodeComponent, "Pnc.2Chunk.2CopyAssignment.TrivialNodeComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPnc_Chunk_CopyAssignment_TrivialNodeComponent::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+//
+//    // Set data to copy from with a known value to test the copy.
+//    WRITE_COMPONENT(chunkFrom, Fix::A, kTestNodeCount, kTestWrintingValue);
+//
+//    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureA, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//    
+//    // Copy assign
+//    *chunkTo = *chunkFrom;
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//    UTEST_TRUE(TEXT("ChunkTo is not the same data as ChunkFrom"), !PNC::ChunkPointer::IsSameData(*chunkTo, *chunkFrom));
+//    TEST_COMPONENT_VALUE("Copy Construction", chunkTo, Fix::A, kTestNodeCount, kTestWrintingValue);
+//
+//    delete chunkTo;
+//    delete chunkFrom;
+//    
+//    FIXEND;
+//}
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_TrivialChunkComponent, "Pnc.2Chunk.2CopyAssignment.TrivialChunkComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPnc_Chunk_CopyAssignment_TrivialChunkComponent::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureV, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataVFrom = chunkFrom->GetComponentData<Fix::V>();
+//    UTEST_TRUE(TEXT("ChunkFrom has ChunkComponent V"), !!componentDataVFrom);
+//
+//    // Set data to copy from with a known value to test the copy.
+//    componentDataVFrom[0].Value = kTestWrintingValue;
+//
+//    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureV, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//
+//    // Copy assign
+//    *chunkTo = *chunkFrom;
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//    UTEST_TRUE(TEXT("ChunkTo is not the same data as ChunkFrom"), !PNC::ChunkPointer::IsSameData(*chunkTo, *chunkFrom));
+//    
+//    auto* componentDataVTo = chunkTo->GetComponentData<Fix::V>();
+//    UTEST_TRUE(TEXT("ChunkTo has Chunk Component V"), !!componentDataVTo);
+//
+//    UTEST_EQUAL(TEXT("Data for ChunkComponent V must be copied"), componentDataVTo[0].Value, kTestWrintingValue);
+//
+//    delete chunkTo;
+//    delete chunkFrom;
+//    
+//    FIXEND;
+//}
+//
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_NonTrivialNodeComponent, "Pnc.2Chunk.2CopyAssignment.NonTrivialNodeComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPnc_Chunk_CopyAssignment_NonTrivialNodeComponent::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureB, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataBFrom = chunkFrom->GetComponentData<Fix::B>();
+//    UTEST_TRUE(TEXT("ChunkFrom has NodeComponent B"), !!componentDataBFrom);
+//
+//    // Overwrite data to copy from with different value so it copies over the kTestConstructingValue set by the default constructor.
+//    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
+//        componentDataBFrom[i].Value = kTestWrintingValue;
+//
+//    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureB, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//
+//    // Copy assign
+//    *chunkTo = *chunkFrom;
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//    UTEST_TRUE(TEXT("ChunkTo is not the same data as ChunkFrom"), !PNC::ChunkPointer::IsSameData(*chunkTo, *chunkFrom));
+//
+//    auto* componentDataBTo = chunkTo->GetComponentData<Fix::B>();
+//    UTEST_TRUE(TEXT("ChunkTo has NodeComponent B"), !!componentDataBTo);
+//
+//    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
+//        UTEST_EQUAL(TEXT("Data for NodeComponent B must be copied"), componentDataBTo[i].Value, kTestWrintingValue);
+//
+//
+//    // Copy assign
+//    ResetCallCounter();
+//    *chunkTo = *chunkFrom;
+//    UTEST_EQUAL(TEXT("Calls to Component B constructor"),       CallCounter::Instance.B.Ctor,       kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component B destructor"),        CallCounter::Instance.B.Dtor,       kTestNodeCount);
+//    UTEST_EQUAL(TEXT("Calls to Component B copy constructor"),  CallCounter::Instance.B.CopyCtor,   kTestNodeCount);
+//    UTEST_EQUAL(TEXT("Calls to Component B move constructor"),  CallCounter::Instance.B.MoveCtor,   kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component B copy assignment"),   CallCounter::Instance.B.CopyAssign, kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component B move assignment"),   CallCounter::Instance.B.MoveAssign, kTest0);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//    UTEST_TRUE(TEXT("ChunkTo is not the same data as ChunkFrom"), !PNC::ChunkPointer::IsSameData(*chunkTo, *chunkFrom));
+//
+//    componentDataBTo = chunkTo->GetComponentData<Fix::B>();
+//    UTEST_TRUE(TEXT("ChunkTo has NodeComponent B"), !!componentDataBTo);
+//
+//    for (PNC::Size_t i = 0; i < kTestNodeCount; ++i)
+//        UTEST_EQUAL(TEXT("Data for NodeComponent B must be copied"), componentDataBTo[i].Value, kTestWrintingValue);
+//
+//    delete chunkTo;
+//    delete chunkFrom;
+//    
+//    FIXEND;
+//}
+//
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_NonTrivialChunkComponent, "Pnc.2Chunk.2CopyAssignment.NonTrivialChunkComponent", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPnc_Chunk_CopyAssignment_NonTrivialChunkComponent::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureW, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkFrom, kTestNodeCount, kTestNodeCapacity);
+//
+//    auto* componentDataWFrom = chunkFrom->GetComponentData<Fix::W>();
+//    UTEST_TRUE(TEXT("ChunkFrom has ChunkComponent W"), !!componentDataWFrom);
+//
+//    // Overwrite data to copy from with different value so it copies over the kTestConstructingValue set by the default constructor.
+//    componentDataWFrom[0].Value = kTestWrintingValue;
+//
+//    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureW, kTestNodeCapacity, kTestNodeCount);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//
+//    // Copy assign
+//    ResetCallCounter();
+//    *chunkTo = *chunkFrom;
+//    UTEST_EQUAL(TEXT("Calls to Component W constructor"),       CallCounter::Instance.W.Ctor,       kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component W destructor"),        CallCounter::Instance.W.Dtor,       kTest1);
+//    UTEST_EQUAL(TEXT("Calls to Component W copy constructor"),  CallCounter::Instance.W.CopyCtor,   kTest1);
+//    UTEST_EQUAL(TEXT("Calls to Component W move constructor"),  CallCounter::Instance.W.MoveCtor,   kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component W copy assignment"),   CallCounter::Instance.W.CopyAssign, kTest0);
+//    UTEST_EQUAL(TEXT("Calls to Component W move assignment"),   CallCounter::Instance.W.MoveAssign, kTest0);
+//    TEST_VALID_CHUNK_STRUCTDATA(chunkTo, kTestNodeCount, kTestNodeCapacity);
+//    UTEST_TRUE(TEXT("ChunkTo is not the same data as ChunkFrom"), !PNC::ChunkPointer::IsSameData(*chunkTo, *chunkFrom));
+//
+//    auto* componentDataWTo = chunkTo->GetComponentData<Fix::W>();
+//    UTEST_TRUE(TEXT("ChunkTo has ChunkComponent W"), !!componentDataWTo);
+//    UTEST_EQUAL(TEXT("Data for ChunkComponent W must be copied"), componentDataWTo[0].Value, kTestWrintingValue);
+//
+//    delete chunkTo;
+//    delete chunkFrom;
+//    
+//    FIXEND;
+//}
 
 #pragma endregion
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPncChunkArrayNew, "Pnc.2ChunkArray.0NewA", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPncChunkArrayNew::RunTest(const FString& Parameters)
-{
-    Fix fix;
-    delete new PNC::ChunkArray(&fix.Data->StructureA, kTestNodeCapacity, kTestChunkCapacity, kTestChunkCount0, kTestNodeCount0);
-    return fix.Finalize(*this);
-}
+//
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPncChunkArrayNew, "Pnc.2ChunkArray.0NewA", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestPncChunkArrayNew::RunTest(const FString& Parameters)
+//{
+//    FIXSTART(Fix);
+//    delete new PNC::ChunkArray(&fix.Data->StructureA, kTestNodeCapacity, kTestChunkCapacity, kTestChunkCount0, kTestNodeCount0);
+//    
+//    FIXEND;
+//}
 
 
 //
 //
-//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPncChunkAddNode, "Pnc.1Chunk.1AddNode", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPncChunkAddNode, "Pnc.2Chunk.1AddNode", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 //bool TestPncChunkAddNode::RunTest(const FString& Parameters)
 //{
 //    FixChunk fix;
@@ -700,7 +1058,7 @@ bool TestPncChunkArrayNew::RunTest(const FString& Parameters)
 //}
 //
 //
-//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPncChunkCopy, "Pnc.1Chunk.Copy", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPncChunkCopy, "Pnc.2Chunk.Copy", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 //bool TestPncChunkCopy::RunTest(const FString& Parameters)
 //{
 //    FixChunk fix;
