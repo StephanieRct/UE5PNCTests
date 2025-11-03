@@ -11,7 +11,7 @@ struct PncTestFixtureChunk : public PncTestFixture
 public:
     PNC::Chunk* Chunk;
     PncTestFixtureChunk()
-        : Chunk(new PNC::Chunk(&Data->StructureA, kSize_NodeCapacity, kSize_NodeCount0))
+        : Chunk(new PNC::Chunk(&Data->StructureA, kSize_NodeCapacity, kSize_NodeCount_0))
     {
         ResetCallCounter();
     }
