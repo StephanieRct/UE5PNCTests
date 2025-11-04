@@ -28,7 +28,7 @@ bool TestPnc_ChunkArray_Construct_StructData::RunTest(const FString& Parameters)
     auto* chunkArray = new PNC::ChunkArray(&fix.Data->StructureABVW, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount, kSize_NodeCount);
 
     auto& internalChunkArray = PNC::ChunkArrayPointer::GetInternalChunk(*chunkArray);
-    TEST_VALID_CHUNKARRAY_STRUCTDATA(chunkArray, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount, kSize_NodeCount);
+    TEST_VALID_CHUNKARRAY_STRUCTDATA(*chunkArray, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount, kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_ChunkCount * kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -67,7 +67,7 @@ bool TestPnc_ChunkArray_Construct_StructData_EmptyChunks::RunTest(const FString&
     auto* chunkArray = new PNC::ChunkArray(&fix.Data->StructureABVW, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount, kSize_NodeCount_0);
 
     auto& internalChunkArray = PNC::ChunkArrayPointer::GetInternalChunk(*chunkArray);
-    TEST_VALID_CHUNKARRAY_STRUCTDATA(chunkArray, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount, kSize_NodeCount_0);
+    TEST_VALID_CHUNKARRAY_STRUCTDATA(*chunkArray, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount, kSize_NodeCount_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_ChunkCount * kSize_NodeCount_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -106,7 +106,7 @@ bool TestPnc_ChunkArray_Construct_StructData_EmptyArray::RunTest(const FString& 
     auto* chunkArray = new PNC::ChunkArray(&fix.Data->StructureABVW, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount_0, kSize_NodeCount);
 
     auto& internalChunkArray = PNC::ChunkArrayPointer::GetInternalChunk(*chunkArray);
-    TEST_VALID_CHUNKARRAY_STRUCTDATA(chunkArray, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount_0, kSize_NodeCount);
+    TEST_VALID_CHUNKARRAY_STRUCTDATA(*chunkArray, kSize_NodeCapacity, kSize_ChunkCapacity, kSize_ChunkCount_0, kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_ChunkCount_0 * kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
