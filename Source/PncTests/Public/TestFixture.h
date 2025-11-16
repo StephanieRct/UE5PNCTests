@@ -58,6 +58,9 @@
         UTEST_EQUAL(TEXT("Chunk's Node Capacity"), _chunk.GetNodeCapacity(), nodeCapacity);\
     }while(0)
 
+#define TEST_VALID_BUNCHPOINTER_STRUCTDATA(chunk, nodeCount, nodeCapacity)\
+    TEST_VALID_BUCKETPOINTER_STRUCTDATA(chunk, nodeCount, nodeCapacity)
+
 #define TEST_VALID_UNIFORMCHUNKARRAY_STRUCTDATA(uniformChunkArray, chunkCount, nodeCountPerChunk)\
     do{\
         auto& _uniformChunkArray = uniformChunkArray;\
@@ -92,15 +95,17 @@
 
 constexpr int kTestConstructingValue = 99;
 constexpr int kTestWrintingValue = 50;
-constexpr PNC::Size_t kSize_NodeCapacity = 16;
+constexpr PNC::Size_t kSize_NodeCapacity = 16; //must be > kSize_NodeCapacityLow
 constexpr PNC::Size_t kSize_NodeCapacityBeginStart = 0;
 constexpr PNC::Size_t kSize_NodeCapacityBeginCount = 7;
 constexpr PNC::Size_t kSize_NodeCapacityMidStart = 5;
 constexpr PNC::Size_t kSize_NodeCapacityMidCount = 5;
 constexpr PNC::Size_t kSize_NodeCapacityEndStart = 13;
 constexpr PNC::Size_t kSize_NodeCapacityEndCount = 3;
+constexpr PNC::Size_t kSize_NodeCapacityLow = 6; // must be < kSize_NodeCapacity
 constexpr PNC::Size_t kSize_NodeCount_0 = 0;
-constexpr PNC::Size_t kSize_NodeCount = 8;
+constexpr PNC::Size_t kSize_NodeCount = 8;  // must be > kSize_NodeCountLow
+constexpr PNC::Size_t kSize_NodeCountLow = 3;  // must be < kSize_NodeCount
 constexpr PNC::Size_t kSize_ChunkCapacity = 12;
 constexpr PNC::Size_t kSize_ChunkCount_0 = 0;
 constexpr PNC::Size_t kSize_ChunkCount = 6;
@@ -250,6 +255,7 @@ public:
     PNC::ChunkStructure StructureVW;
     PNC::ChunkStructure StructureAV;
     PNC::ChunkStructure StructureBV;
+    PNC::ChunkStructure StructureBW;
     PNC::ChunkStructure StructureABV;
     PNC::ChunkStructure StructureAVW;
     PNC::ChunkStructure StructureBVW;
@@ -268,6 +274,7 @@ public:
         , StructureVW  (&ComponentTypeV, &ComponentTypeW)
         , StructureAV  (&ComponentTypeA, &ComponentTypeV)
         , StructureBV  (&ComponentTypeB, &ComponentTypeV)
+        , StructureBW  (&ComponentTypeB, &ComponentTypeW)
         , StructureABV (&ComponentTypeA, &ComponentTypeB, &ComponentTypeV)
         , StructureAVW (&ComponentTypeA, &ComponentTypeV, &ComponentTypeW)
         , StructureBVW (&ComponentTypeB, &ComponentTypeV, &ComponentTypeW)

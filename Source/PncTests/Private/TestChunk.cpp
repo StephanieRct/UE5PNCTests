@@ -118,6 +118,7 @@ bool TestPnc_Chunk_MoveAssignment_Self::RunTest(const FString& Parameters)
 
     FIXEND;
 }
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_MoveAssignment_VoidNull_StructData, "Pnc.2-Chunk.2-MoveAssignment-VoidNull-StructData", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool TestPnc_Chunk_MoveAssignment_VoidNull_StructData::RunTest(const FString& Parameters)
 {
@@ -163,6 +164,7 @@ bool TestPnc_Chunk_MoveAssignment_VoidNull_StructData::RunTest(const FString& Pa
 
     FIXEND;
 }
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_MoveAssignment_StructData_VoidNull, "Pnc.2-Chunk.2-MoveAssignment-StructData-VoidNull", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool TestPnc_Chunk_MoveAssignment_StructData_VoidNull::RunTest(const FString& Parameters)
 {
@@ -199,6 +201,77 @@ bool TestPnc_Chunk_MoveAssignment_StructData_VoidNull::RunTest(const FString& Pa
     FIXEND;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_MoveAssignment_StructData_StructData_SameStruct, "Pnc.2-Chunk.2-MoveAssignment-StructData-StructData-SameStruct", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_MoveAssignment_StructData_StructData_SameStruct::RunTest(const FString& Parameters)
+{
+    FIXSTART(Fix);
+
+    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureABVW, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount);
+
+    auto allocationCountBefore = pnc_allocation_count;
+    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureABVW, kSize_NodeCountLow);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCountLow);
+
+    ResetCallCounter();
+    *chunkTo = std::move(*chunkFrom);
+    UTEST_EQUAL(TEXT("Allocation count"), pnc_allocation_count - allocationCountBefore, 0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move constructor"),   CallCounter::Instance.B.MoveCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy assignment"),    CallCounter::Instance.B.CopyAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move assignment"),    CallCounter::Instance.B.MoveAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent constructor"),       CallCounter::Instance.W.Ctor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent destructor"),        CallCounter::Instance.W.Dtor,       kSize_1);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy constructor"),  CallCounter::Instance.W.CopyCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),  CallCounter::Instance.W.MoveCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),   CallCounter::Instance.W.CopyAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kSize_0);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_VOIDNULL(*chunkFrom);
+
+    delete chunkTo;
+    delete chunkFrom;
+
+    FIXEND;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_MoveAssignment_StructData_StructData_DiffStruct, "Pnc.2-Chunk.2-MoveAssignment-StructData-StructData-DiffStruct", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_MoveAssignment_StructData_StructData_DiffStruct::RunTest(const FString& Parameters)
+{
+    FIXSTART(Fix);
+
+    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureABVW, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount);
+
+    auto allocationCountBefore = pnc_allocation_count;
+    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureBW, kSize_NodeCountLow);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCountLow);
+
+    ResetCallCounter();
+    *chunkTo = std::move(*chunkFrom);
+    UTEST_EQUAL(TEXT("Allocation count"), pnc_allocation_count - allocationCountBefore, 0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move constructor"),   CallCounter::Instance.B.MoveCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy assignment"),    CallCounter::Instance.B.CopyAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move assignment"),    CallCounter::Instance.B.MoveAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent constructor"),       CallCounter::Instance.W.Ctor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent destructor"),        CallCounter::Instance.W.Dtor,       kSize_1);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy constructor"),  CallCounter::Instance.W.CopyCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),  CallCounter::Instance.W.MoveCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),   CallCounter::Instance.W.CopyAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kSize_0);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_VOIDNULL(*chunkFrom);
+
+    delete chunkTo;
+    delete chunkFrom;
+
+    FIXEND;
+}
 // TODO Chunk.MoveAssignment-VoidNull-VoidData
 // 
 // TODO Chunk.ConstructChunkPointer-StructData (construct a Chunk copy of a ChunkPointer)
@@ -384,6 +457,76 @@ bool TestPnc_Chunk_CopyAssignment_StructData_VoidNull::RunTest(const FString& Pa
 
     FIXEND;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_StructData_StructData_SameStruct, "Pnc.2-Chunk.4-CopyAssignment-StructData-StructData-SameStruct", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_CopyAssignment_StructData_StructData_SameStruct::RunTest(const FString& Parameters)
+{
+    FIXSTART(Fix);
+
+    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureABVW, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount);
+
+    auto allocationCountBefore = pnc_allocation_count;
+    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureABVW, kSize_NodeCountLow);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCountLow);
+
+    ResetCallCounter();
+    *chunkTo = *chunkFrom;
+    UTEST_GREATER(TEXT("Allocation count"), pnc_allocation_count - allocationCountBefore, 0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_NodeCount);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move constructor"),   CallCounter::Instance.B.MoveCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy assignment"),    CallCounter::Instance.B.CopyAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move assignment"),    CallCounter::Instance.B.MoveAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent constructor"),       CallCounter::Instance.W.Ctor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent destructor"),        CallCounter::Instance.W.Dtor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy constructor"),  CallCounter::Instance.W.CopyCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),  CallCounter::Instance.W.MoveCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),   CallCounter::Instance.W.CopyAssign, kSize_1);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kSize_0);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount);
+
+    delete chunkTo;
+    delete chunkFrom;
+
+    FIXEND;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Chunk_CopyAssignment_StructData_StructData_DiffStruct, "Pnc.2-Chunk.4-CopyAssignment-StructData-StructData-DiffStruct", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestPnc_Chunk_CopyAssignment_StructData_StructData_DiffStruct::RunTest(const FString& Parameters)
+{
+    FIXSTART(Fix);
+
+    auto* chunkFrom = new PNC::Chunk(&fix.Data->StructureABVW, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount);
+
+    auto allocationCountBefore = pnc_allocation_count;
+    auto* chunkTo = new PNC::Chunk(&fix.Data->StructureBW, kSize_NodeCountLow);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCountLow);
+
+    ResetCallCounter();
+    *chunkTo = *chunkFrom;
+    UTEST_GREATER(TEXT("Allocation count"), pnc_allocation_count - allocationCountBefore, 0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_NodeCount);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move constructor"),   CallCounter::Instance.B.MoveCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent copy assignment"),    CallCounter::Instance.B.CopyAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to NodeComponent move assignment"),    CallCounter::Instance.B.MoveAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent constructor"),       CallCounter::Instance.W.Ctor,       kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent destructor"),        CallCounter::Instance.W.Dtor,       kSize_1);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy constructor"),  CallCounter::Instance.W.CopyCtor,   kSize_1);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),  CallCounter::Instance.W.MoveCtor,   kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),   CallCounter::Instance.W.CopyAssign, kSize_0);
+    UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kSize_0);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount);
+
+    delete chunkTo;
+    delete chunkFrom;
+
+    FIXEND;
+}
 
 struct TestAlgoSetComponentA : public PNC::Algorithm<TestAlgoSetComponentA>
 {
@@ -424,3 +567,5 @@ bool TestPnc_Chunk_Algo::RunTest(const FString& Parameters)
     TEST_COMPONENT_VALUE("algoTestAlgoSetComponentA.Run", chunk, Fix::A, kSize_NodeCount, kTestWrintingValue);
     FIXEND;
 }
+
+
