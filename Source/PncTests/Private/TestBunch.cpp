@@ -15,7 +15,7 @@ bool TestPnc_Bunch_ChunkPointer::RunTest(const FString& Parameters)
     TEST_VALID_BUCKETPOINTER_STRUCTDATA(chunk, kSize_NodeCount, kSize_NodeCapacity);
 
     PNC::ChunkPointer& chunkPointer = chunk;
-    TEST_VALID_CHUNKPOINTER_STRUCTDATA(chunkPointer, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(chunkPointer, kSize_NodeCount);
 
     PNC::BucketPointer& bucketPointer = chunk;
     TEST_VALID_BUCKETPOINTER_STRUCTDATA(bucketPointer, kSize_NodeCount, kSize_NodeCapacity);
@@ -25,7 +25,7 @@ bool TestPnc_Bunch_ChunkPointer::RunTest(const FString& Parameters)
 
     const Size_t index = bunchPointer.AddNode();
     UTEST_EQUAL(TEXT("Added Node Index"), index, kSize_NodeCount);
-    TEST_VALID_CHUNKPOINTER_STRUCTDATA(chunkPointer, kSize_NodeCount + 1);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(chunkPointer, kSize_NodeCount + 1);
     TEST_VALID_BUCKETPOINTER_STRUCTDATA(bucketPointer, kSize_NodeCount + 1, kSize_NodeCapacity);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(bunchPointer, kSize_NodeCount + 1, kSize_NodeCapacity);
     FIXEND;

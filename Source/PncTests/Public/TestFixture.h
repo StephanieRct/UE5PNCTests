@@ -20,11 +20,10 @@
         UTEST_EQUAL(TEXT("VoidNull Chunk '" #chunkPointer "' NodeCount"), _chunkPointer.GetNodeCount(), kSize_0)\
     }while(0)
 
-#define TEST_VALID_CHUNKPOINTER_STRUCTDATA(chunkPointer, nodeCount)\
+#define TEST_VALID_CHUNKPOINTER_STRUCTDATA(chunkPointer)\
     do{\
         auto& _chunkPointer = chunkPointer;\
         UTEST_TRUE(TEXT("Chunk is StructData"), _chunkPointer.IsStructData());\
-        UTEST_EQUAL(TEXT("Chunk's Node Count"), _chunkPointer.GetNodeCount(), nodeCount);\
         auto& _internalChunkPointer = PNC::ChunkPointer::GetInternalChunk(_chunkPointer);\
         auto componentTypeCount = _internalChunkPointer.Structure->GetComponentCount();\
         UTEST_TRUE(TEXT("Chunk owns its ComponentData array"), pnc_owns(_internalChunkPointer.ComponentData, componentTypeCount));\
@@ -48,14 +47,20 @@
         }\
     }while(0)
 
+#define TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(chunkPointer, nodeCount)\
+    do {\
+        auto& _chunkPointerN = chunkPointer;\
+        TEST_VALID_CHUNKPOINTER_STRUCTDATA(_chunkPointerN);\
+        UTEST_EQUAL(TEXT("Chunk's Node Count"), _chunkPointerN.GetNodeCount(), nodeCount);\
+    }while (0)
 
 
 
 #define TEST_VALID_BUCKETPOINTER_STRUCTDATA(chunk, nodeCount, nodeCapacity)\
     do{\
-        auto& _chunk = chunk;\
-        TEST_VALID_CHUNKPOINTER_STRUCTDATA(_chunk, nodeCount);\
-        UTEST_EQUAL(TEXT("Chunk's Node Capacity"), _chunk.GetNodeCapacity(), nodeCapacity);\
+        auto& _Bucket = chunk;\
+        TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(_Bucket, nodeCount);\
+        UTEST_EQUAL(TEXT("Chunk's Node Capacity"), _Bucket.GetNodeCapacity(), nodeCapacity);\
     }while(0)
 
 #define TEST_VALID_BUNCHPOINTER_STRUCTDATA(chunk, nodeCount, nodeCapacity)\
@@ -64,13 +69,29 @@
 #define TEST_VALID_UNIFORMCHUNKARRAY_STRUCTDATA(uniformChunkArray, chunkCount, nodeCountPerChunk)\
     do{\
         auto& _uniformChunkArray = uniformChunkArray;\
-        TEST_VALID_CHUNKPOINTER_STRUCTDATA(_uniformChunkArray, chunkCount * nodeCountPerChunk);\
+        TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(_uniformChunkArray, chunkCount * nodeCountPerChunk);\
         UTEST_EQUAL(TEXT("UniformChunkArray's Chunk Count"),       _uniformChunkArray.GetChunkCount(),    chunkCount);\
         auto& _internalChunkArray = PNC::UniformChunkArray::GetInternalChunk(_uniformChunkArray);\
         for (PNC::Size_t _k = 0; _k < _uniformChunkArray.GetChunkCount(); ++_k)\
         {\
-            TEST_VALID_CHUNKPOINTER_STRUCTDATA(_uniformChunkArray.GetChunk(_k), nodeCountPerChunk);\
-            TEST_VALID_CHUNKPOINTER_STRUCTDATA(_uniformChunkArray[_k], nodeCountPerChunk);\
+            TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(_uniformChunkArray.GetChunk(_k), nodeCountPerChunk);\
+            TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(_uniformChunkArray[_k], nodeCountPerChunk);\
+        }\
+    }while(0)
+
+
+#define TEST_VALID_CHUNKARRAY_STRUCTDATA(chunkArray, arrayNodeCapacity, chunkCapacity, chunkCount)\
+    do{\
+        auto& _chunkArray = chunkArray;\
+        UTEST_TRUE (TEXT("ChunkArray is StructData"),       _chunkArray.IsStructData());\
+        UTEST_EQUAL(TEXT("ChunkArray's Node Capacity"),     _chunkArray.GetNodeCapacity(),  arrayNodeCapacity);\
+        UTEST_EQUAL(TEXT("ChunkArray's Chunk Count"),       _chunkArray.GetChunkCount(),    chunkCount);\
+        UTEST_EQUAL(TEXT("ChunkArray's Chunk Capacity"),    _chunkArray.GetChunkCapacity(), chunkCapacity);\
+        auto& _internalChunkArray = PNC::ChunkArrayPointer::GetInternalChunk(_chunkArray);\
+        UTEST_TRUE(TEXT("ChunkArray owns its ChunkPointer array"), pnc_owns(_internalChunkArray.Array.Chunks, sizeof(PNC::ChunkArrayPointer::ChunkPointerElement_t) * chunkCapacity));\
+        for (PNC::Size_t _k = 0; _k < _chunkArray.GetChunkCount(); ++_k)\
+        {\
+            TEST_VALID_CHUNKPOINTER_STRUCTDATA(_chunkArray.GetChunk(_k));\
         }\
     }while(0)
 
@@ -95,23 +116,28 @@
 
 constexpr int kTestConstructingValue = 99;
 constexpr int kTestWrintingValue = 50;
+
+constexpr PNC::Size_t kSize_1 = 1;
+constexpr PNC::Size_t kSize_0 = 0;
+
 constexpr PNC::Size_t kSize_NodeCapacity = 16; //must be > kSize_NodeCapacityLow
+constexpr PNC::Size_t kSize_NodeCapacityLow = 6; // must be < kSize_NodeCapacity
 constexpr PNC::Size_t kSize_NodeCapacityBeginStart = 0;
 constexpr PNC::Size_t kSize_NodeCapacityBeginCount = 7;
 constexpr PNC::Size_t kSize_NodeCapacityMidStart = 5;
 constexpr PNC::Size_t kSize_NodeCapacityMidCount = 5;
 constexpr PNC::Size_t kSize_NodeCapacityEndStart = 13;
 constexpr PNC::Size_t kSize_NodeCapacityEndCount = 3;
-constexpr PNC::Size_t kSize_NodeCapacityLow = 6; // must be < kSize_NodeCapacity
-constexpr PNC::Size_t kSize_NodeCount_0 = 0;
+
 constexpr PNC::Size_t kSize_NodeCount = 8;  // must be > kSize_NodeCountLow
 constexpr PNC::Size_t kSize_NodeCountLow = 3;  // must be < kSize_NodeCount
-constexpr PNC::Size_t kSize_ChunkCapacity = 12;
-constexpr PNC::Size_t kSize_ChunkCount_0 = 0;
-constexpr PNC::Size_t kSize_ChunkCount = 6;
-constexpr PNC::Size_t kSize_1 = 1;
-constexpr PNC::Size_t kSize_0 = 0;
+constexpr PNC::Size_t kSize_NodeCount_0 = 0;
 
+constexpr PNC::Size_t kSize_ChunkCapacity = 12;
+constexpr PNC::Size_t kSize_ChunkCount = 6;
+constexpr PNC::Size_t kSize_ChunkCount_0 = 0;
+
+constexpr PNC::Size_t kSize_ArrayNodeCapacity = kSize_NodeCapacity * kSize_ChunkCapacity;
 
 struct TypeCallCounter
 {
@@ -349,22 +375,8 @@ using Fix = PncTestFixture;
         UTEST_TRUE(TEXT("ChunkChunk owns its ChunkPointer array"), pnc_owns(_internalChunkArray.Array.Chunks, sizeof(PNC::ChunkArrayPointer::ChunkPointerElement_t) * chunkCount));\
         for (PNC::Size_t _k = 0; _k < _chunkChunk.GetChunkCount(); ++_k)\
         {\
-            TEST_VALID_CHUNKPOINTER_STRUCTDATA(_chunkChunk.GetChunk(_k), nodeCountPerChunk);\
+            TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(_chunkChunk.GetChunk(_k), nodeCountPerChunk);\
         }\
     }while(0)
 
-#define TEST_VALID_CHUNKARRAY_STRUCTDATA(chunkArray, nodeCapacityPerChunk, chunkCapacity, chunkCount, nodeCountPerChunk)\
-    do{\
-        auto& _chunkArray = chunkArray;\
-        UTEST_TRUE (TEXT("ChunkArray is StructData"),       _chunkArray.IsStructData());\
-        UTEST_EQUAL(TEXT("ChunkArray's Node Capacity"),     _chunkArray.GetNodeCapacity(),  nodeCapacityPerChunk * chunkCapacity);\
-        UTEST_EQUAL(TEXT("ChunkArray's Chunk Count"),       _chunkArray.GetChunkCount(),    chunkCount);\
-        UTEST_EQUAL(TEXT("ChunkArray's Chunk Capacity"),    _chunkArray.GetChunkCapacity(), chunkCapacity);\
-        auto& _internalChunkArray = PNC::ChunkArrayPointer::GetInternalChunk(_chunkArray);\
-        UTEST_TRUE(TEXT("ChunkArray owns its ChunkPointer array"), pnc_owns(_internalChunkArray.Array.Chunks, sizeof(PNC::ChunkArrayPointer::ChunkPointerElement_t) * chunkCapacity));\
-        for (PNC::Size_t _k = 0; _k < _chunkArray.GetChunkCount(); ++_k)\
-        {\
-            TEST_VALID_CHUNKPOINTER_STRUCTDATA(_chunkArray.GetChunk(_k), nodeCountPerChunk);\
-        }\
-    }while(0)
 #pragma endregion
