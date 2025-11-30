@@ -561,7 +561,7 @@ bool TestPnc_Chunk_Algo::RunTest(const FString& Parameters)
     FIXSTART(Fix);
 
     PNC::Chunk chunk(&fix.Data->StructureABVW, kSize_NodeCount);
-    TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(*chunk, kSize_NodeCount);
+    TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(chunk, kSize_NodeCount);
     TestAlgoSetComponentA algoTestAlgoSetComponentA(kTestWrintingValue);
     algoTestAlgoSetComponentA.Run(&chunk);
     TEST_COMPONENT_VALUE("algoTestAlgoSetComponentA.Run", chunk, Fix::A, kSize_NodeCount, kTestWrintingValue);
