@@ -76,10 +76,10 @@ bool TestPnc_Bunch_MoveConstruction::RunTest(const FString& Parameters)
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount, kSize_NodeCapacity);
 
     // Set data to copy from with a known value to test the copy.
-    WRITE_COMPONENT(*chunkFrom, Fix::A, kSize_NodeCount, kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::B, kSize_NodeCount, kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::V, kSize_1,         kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::W, kSize_1,         kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CV, kSize_1,         kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CW, kSize_1,         kTestWrintingValue);
     
     ResetCallCounter();
     auto allocationCountBefore = pnc_allocation_count;
@@ -101,10 +101,10 @@ bool TestPnc_Bunch_MoveConstruction::RunTest(const FString& Parameters)
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount, kSize_NodeCapacity);
     TEST_VALID_CHUNKPOINTER_VOIDNULL(*chunkFrom);
 
-    TEST_COMPONENT_VALUE("Move Construction TrivialNodeComponent",      *chunkTo, Fix::A, kSize_NodeCount, kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Move Construction NonTrivialNodeComponent",   *chunkTo, Fix::B, kSize_NodeCount, kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Move Construction TrivialChunkComponent",     *chunkTo, Fix::V, kSize_1,         kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Move Construction NonTrivialChunkComponent",  *chunkTo, Fix::W, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction TrivialNodeComponent",      *chunkTo, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialNodeComponent",   *chunkTo, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction TrivialChunkComponent",     *chunkTo, Fix::CV, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialChunkComponent",  *chunkTo, Fix::CW, kSize_1,         kTestWrintingValue);
 
     delete chunkTo;
     delete chunkFrom;
@@ -150,10 +150,10 @@ bool TestPnc_Bunch_MoveAssignment_VoidNull_StructData::RunTest(const FString& Pa
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount, kSize_NodeCapacity);
 
     // Set data to copy from with a known value to test the copy.
-    WRITE_COMPONENT(*chunkFrom, Fix::A, kSize_NodeCount, kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::B, kSize_NodeCount, kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::V, kSize_1,         kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::W, kSize_1,         kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CV, kSize_1,         kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CW, kSize_1,         kTestWrintingValue);
 
     auto* chunkTo = new PNC::Bunch();
     TEST_VALID_CHUNKPOINTER_VOIDNULL(*chunkTo);
@@ -177,10 +177,10 @@ bool TestPnc_Bunch_MoveAssignment_VoidNull_StructData::RunTest(const FString& Pa
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount, kSize_NodeCapacity);
     TEST_VALID_CHUNKPOINTER_VOIDNULL(*chunkFrom);
 
-    TEST_COMPONENT_VALUE("Move Construction TrivialNodeComponent",      *chunkTo, Fix::A, kSize_NodeCount, kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Move Construction NonTrivialNodeComponent",   *chunkTo, Fix::B, kSize_NodeCount, kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Move Construction TrivialChunkComponent",     *chunkTo, Fix::V, kSize_1,         kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Move Construction NonTrivialChunkComponent",  *chunkTo, Fix::W, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction TrivialNodeComponent",      *chunkTo, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialNodeComponent",   *chunkTo, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction TrivialChunkComponent",     *chunkTo, Fix::CV, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialChunkComponent",  *chunkTo, Fix::CW, kSize_1,         kTestWrintingValue);
 
     delete chunkTo;
     delete chunkFrom;
@@ -231,6 +231,11 @@ bool TestPnc_Bunch_MoveAssignment_StructData_StructData_SameStruct::RunTest(cons
     auto* chunkFrom = new PNC::Bunch(&fix.Data->StructureABVW, kSize_NodeCapacity, kSize_NodeCount);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount, kSize_NodeCapacity);
 
+    WRITE_COMPONENT(*chunkFrom, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CV, kSize_1, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CW, kSize_1, kTestWrintingValue);
+
     auto allocationCountBefore = pnc_allocation_count;
     auto* chunkTo = new PNC::Bunch(&fix.Data->StructureABVW, kSize_NodeCapacityLow, kSize_NodeCountLow);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCountLow, kSize_NodeCapacityLow);
@@ -252,6 +257,11 @@ bool TestPnc_Bunch_MoveAssignment_StructData_StructData_SameStruct::RunTest(cons
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kSize_0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount, kSize_NodeCapacity);
     TEST_VALID_CHUNKPOINTER_VOIDNULL(*chunkFrom);
+    
+    TEST_COMPONENT_VALUE("Move Construction TrivialNodeComponent",      *chunkTo, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialNodeComponent",   *chunkTo, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction TrivialChunkComponent",     *chunkTo, Fix::CV, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Move Construction NonTrivialChunkComponent",  *chunkTo, Fix::CW, kSize_1,         kTestWrintingValue);
 
     delete chunkTo;
     delete chunkFrom;
@@ -336,10 +346,10 @@ bool TestPnc_Bunch_CopyConstruction_StructData::RunTest(const FString& Parameter
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount, kSize_NodeCapacity);
 
     // Set data to copy from with a known value to test the copy.
-    WRITE_COMPONENT(*chunkFrom, Fix::A, kSize_NodeCount, kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::B, kSize_NodeCount, kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::V, kSize_1,         kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::W, kSize_1,         kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CV, kSize_1,         kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CW, kSize_1,         kTestWrintingValue);
 
     ResetCallCounter();
     auto* chunkTo = new PNC::Bunch(*chunkFrom);
@@ -357,10 +367,10 @@ bool TestPnc_Bunch_CopyConstruction_StructData::RunTest(const FString& Parameter
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),   CallCounter::Instance.W.MoveAssign, kSize_0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount, kSize_NodeCapacity);
 
-    TEST_COMPONENT_VALUE("Copy Construction TrivialNodeComponent",      *chunkTo, Fix::A, kSize_NodeCount, kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Copy Construction NonTrivialNodeComponent",   *chunkTo, Fix::B, kSize_NodeCount, kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Copy Construction TrivialChunkComponent",     *chunkTo, Fix::V, kSize_1,         kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Copy Construction NonTrivialChunkComponent",  *chunkTo, Fix::W, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Construction TrivialNodeComponent",      *chunkTo, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Construction NonTrivialNodeComponent",   *chunkTo, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Construction TrivialChunkComponent",     *chunkTo, Fix::CV, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Construction NonTrivialChunkComponent",  *chunkTo, Fix::CW, kSize_1,         kTestWrintingValue);
 
     delete chunkTo;
     delete chunkFrom;
@@ -410,10 +420,10 @@ bool TestPnc_Bunch_CopyAssignment_VoidNull_StructData::RunTest(const FString& Pa
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount, kSize_NodeCapacity);
 
     // Set data to copy from with a known value to test the copy.
-    WRITE_COMPONENT(*chunkFrom, Fix::A, kSize_NodeCount, kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::B, kSize_NodeCount, kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::V, kSize_1,         kTestWrintingValue);
-    WRITE_COMPONENT(*chunkFrom, Fix::W, kSize_1,         kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CV, kSize_1,         kTestWrintingValue);
+    WRITE_COMPONENT(*chunkFrom, Fix::CW, kSize_1,         kTestWrintingValue);
 
     auto* chunkTo = new PNC::Bunch();
     TEST_VALID_CHUNKPOINTER_VOIDNULL(*chunkTo);
@@ -435,10 +445,10 @@ bool TestPnc_Bunch_CopyAssignment_VoidNull_StructData::RunTest(const FString& Pa
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCount, kSize_NodeCapacity);
     UTEST_TRUE(TEXT("ChunkTo is not the same data as ChunkFrom"), !PNC::ChunkPointer::IsSameData(*chunkTo, *chunkFrom));
 
-    TEST_COMPONENT_VALUE("Copy Assignment TrivialNodeComponent",      *chunkTo, Fix::A, kSize_NodeCount, kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Copy Assignment NonTrivialNodeComponent",   *chunkTo, Fix::B, kSize_NodeCount, kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Copy Assignment TrivialChunkComponent",     *chunkTo, Fix::V, kSize_1,         kTestWrintingValue);
-    TEST_COMPONENT_VALUE("Copy Assignment NonTrivialChunkComponent",  *chunkTo, Fix::W, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Assignment TrivialNodeComponent",      *chunkTo, Fix::NA, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Assignment NonTrivialNodeComponent",   *chunkTo, Fix::NB, kSize_NodeCount, kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Assignment TrivialChunkComponent",     *chunkTo, Fix::CV, kSize_1,         kTestWrintingValue);
+    TEST_COMPONENT_VALUE("Copy Assignment NonTrivialChunkComponent",  *chunkTo, Fix::CW, kSize_1,         kTestWrintingValue);
 
     delete chunkTo;
     delete chunkFrom;
@@ -572,6 +582,10 @@ bool TestPnc_Bunch_AddNode::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
 
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
+
     auto allocationCountBefore = pnc_allocation_count;
     ResetCallCounter();
     PNC::Size_t index = chunk->AddNodes(kSize_NodeCapacity);
@@ -590,6 +604,11 @@ bool TestPnc_Bunch_AddNode::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
+
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
 
     ResetCallCounter();
     delete chunk;
@@ -618,6 +637,10 @@ bool TestPnc_Bunch_AddNode_GrowEmpty::RunTest(const FString& Parameters)
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, 0, kSize_NodeCapacityLow);
     UTEST_EQUAL(TEXT("Available Nodes"), chunk->AvailableNodes(), kSize_NodeCapacityLow);
 
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
+
     ResetCallCounter();
     const PNC::Size_t index = chunk->AddNodes(kSize_NodeCapacity);
     const PNC::Size_t expectedCapacity = std::max(kSize_NodeCapacityLow * 2, kSize_NodeCapacity);
@@ -635,6 +658,11 @@ bool TestPnc_Bunch_AddNode_GrowEmpty::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
+    
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
 
     delete chunk;
     FIXEND;
@@ -648,6 +676,10 @@ bool TestPnc_Bunch_AddNode_GrowFull::RunTest(const FString& Parameters)
     auto*const chunk = new PNC::Bunch(&fix.Data->StructureABVW, kSize_NodeCapacityLow, kSize_NodeCapacityLow);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, kSize_NodeCapacityLow, kSize_NodeCapacityLow);
     UTEST_EQUAL(TEXT("Available Nodes"), chunk->AvailableNodes(), 0);
+
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
 
     ResetCallCounter();
     const PNC::Size_t index = chunk->AddNodes(kSize_NodeCapacity);
@@ -666,6 +698,11 @@ bool TestPnc_Bunch_AddNode_GrowFull::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
+
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
 
     delete chunk;
     FIXEND;
@@ -691,6 +728,10 @@ bool TestPnc_Bunch_RemoveNode_All::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
 
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
+
     auto allocationCountBefore = pnc_allocation_count;
     ResetCallCounter();
     chunk->RemoveNode(0, kSize_NodeCapacity);
@@ -708,6 +749,11 @@ bool TestPnc_Bunch_RemoveNode_All::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
+
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
 
     ResetCallCounter();
     delete chunk;
@@ -747,8 +793,12 @@ bool TestPnc_Bunch_RemoveNode_Midsection::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
 
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
+
     // Write sequential numbers in component A
-    auto* componentDataA = chunk->GetComponentData<Fix::A>(); 
+    auto* componentDataA = chunk->GetComponentData<Fix::NA>(); 
     UTEST_TRUE(TEXT("Has Component componentDataA"), !!componentDataA); 
     for (PNC::Size_t i = 0; i < chunk->GetNodeCount(); ++i)
         componentDataA[i].Value = i; 
@@ -770,6 +820,11 @@ bool TestPnc_Bunch_RemoveNode_Midsection::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
+
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
 
     // Test if node data has moved to the correct position in the chunk
     for (PNC::Size_t i = 0; i < kSize_NodeCapacityMidStart; ++i)
@@ -824,8 +879,12 @@ bool TestPnc_Bunch_RemoveNode_End::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
 
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
+
     // Write sequential numbers in component A
-    auto* componentDataA = chunk->GetComponentData<Fix::A>(); 
+    auto* componentDataA = chunk->GetComponentData<Fix::NA>(); 
     UTEST_TRUE(TEXT("Has Component componentDataA"), !!componentDataA); 
     for (PNC::Size_t i = 0; i < chunk->GetNodeCount(); ++i)
         componentDataA[i].Value = i; 
@@ -848,6 +907,11 @@ bool TestPnc_Bunch_RemoveNode_End::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
+
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
 
     // Test if node data has moved to the correct position in the chunk
     for (PNC::Size_t i = 0; i < kSize_NodeCapacityBeginCount; ++i)
@@ -898,8 +962,12 @@ bool TestPnc_Bunch_RemoveNodeKeepOrder_Midsection::RunTest(const FString& Parame
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
 
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
+
     // Write sequential numbers in component A
-    auto* componentDataA = chunk->GetComponentData<Fix::A>();
+    auto* componentDataA = chunk->GetComponentData<Fix::NA>();
     UTEST_TRUE(TEXT("Has Component componentDataA"), !!componentDataA);
     for (PNC::Size_t i = 0; i < chunk->GetNodeCount(); ++i)
         componentDataA[i].Value = i;
@@ -921,7 +989,12 @@ bool TestPnc_Bunch_RemoveNodeKeepOrder_Midsection::RunTest(const FString& Parame
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
-    
+
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
+
     // Test if node data has moved to the correct position in the chunk
     for (PNC::Size_t i = 0; i < kSize_NodeCapacityMidStart; ++i)
     {
@@ -970,8 +1043,12 @@ bool TestPnc_Bunch_RemoveNodeKeepOrder_End::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
 
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
+
     // Write sequential numbers in component A
-    auto* componentDataA = chunk->GetComponentData<Fix::A>(); 
+    auto* componentDataA = chunk->GetComponentData<Fix::NA>(); 
     UTEST_TRUE(TEXT("Has Component componentDataA"), !!componentDataA); 
     for (PNC::Size_t i = 0; i < chunk->GetNodeCount(); ++i)
         componentDataA[i].Value = i; 
@@ -994,6 +1071,11 @@ bool TestPnc_Bunch_RemoveNodeKeepOrder_End::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
+
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
 
     // Test if node data has moved to the correct position in the chunk
     for (PNC::Size_t i = 0; i < newNodeCount; ++i)
@@ -1026,6 +1108,10 @@ bool TestPnc_Bunch_Clear::RunTest(const FString& Parameters)
     auto* chunk = new PNC::Bunch(&fix.Data->StructureABVW, kSize_NodeCapacity, kSize_NodeCapacity);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, kSize_NodeCapacity, kSize_NodeCapacity);
 
+    // ChunkComponents should keep their values
+    chunk->GetComponentData<Fix::CV>()[0].Value = kTestWrintingValue;
+    chunk->GetComponentData<Fix::CW>()[0].Value = kTestWrintingValue;
+
     auto allocationCountBefore = pnc_allocation_count;
     ResetCallCounter();
     chunk->Clear();
@@ -1043,6 +1129,11 @@ bool TestPnc_Bunch_Clear::RunTest(const FString& Parameters)
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move constructor"),   CallCounter::Instance.W.MoveCtor,   kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent copy assignment"),    CallCounter::Instance.W.CopyAssign, kSize_0);
     UTEST_EQUAL(TEXT("Calls to ChunkComponent move assignment"),    CallCounter::Instance.W.MoveAssign, kSize_0);
+
+    auto* componentCV = chunk->GetComponentData<Fix::CV>();
+    UTEST_EQUAL(TEXT("Value of component CV after"), componentCV->Value, kTestWrintingValue);
+    auto* componentCW = chunk->GetComponentData<Fix::CW>();
+    UTEST_EQUAL(TEXT("Value of component CW after"), componentCW->Value, kTestWrintingValue);
 
     ResetCallCounter();
     delete chunk;

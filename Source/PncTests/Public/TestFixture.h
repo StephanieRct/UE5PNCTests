@@ -264,7 +264,7 @@ struct PncTestData
 {
 public:
 
-    using A = TestNodeComponentA;
+    using NA = TestNodeComponentA;
     using B = TestNodeComponentB;
     using V = TestChunkComponentV;
     using W = TestChunkComponentW;
@@ -290,7 +290,7 @@ public:
     PNC::ChunkStructure StructureABVW;
 
     PncTestData()
-        : ComponentTypeA((A*)nullptr)
+        : ComponentTypeA((NA*)nullptr)
         , ComponentTypeB((B*)nullptr)
         , ComponentTypeV((V*)nullptr)
         , ComponentTypeW((W*)nullptr)
@@ -320,10 +320,10 @@ struct PncTestFixture
 {
 public:
 
-    using A = TestNodeComponentA;
-    using B = TestNodeComponentB;
-    using V = TestChunkComponentV;
-    using W = TestChunkComponentW;
+    using NA = TestNodeComponentA;
+    using NB = TestNodeComponentB;
+    using CV = TestChunkComponentV;
+    using CW = TestChunkComponentW;
 
     int AllocationCountBefore;
     PncTestData* Data;
