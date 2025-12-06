@@ -7,7 +7,7 @@
 //    return false;
 //    //FIXSTART(Fix);
 //    //ResetCallCounter();
-//    //auto* uniformChunkArray = new PNC::UniformChunkArray(&fix.Data->StructureABVW, kSize_ChunkCount, kSize_NodeCount);
+//    //auto* uniformChunkArray = new Ni::Containers::NUniformArray(&fix.Data->StructureABVW, kSize_ChunkCount, kSize_NodeCount);
 //    //TEST_VALID_UNIFORMCHUNKARRAY_STRUCTDATA(*uniformChunkArray, kSize_ChunkCount, kSize_NodeCount);
 //    //UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_ChunkCount * kSize_NodeCount);
 //    //UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);

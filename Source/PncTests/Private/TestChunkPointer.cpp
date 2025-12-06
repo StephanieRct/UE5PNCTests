@@ -10,7 +10,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_ChunkPointer_Construct_VoidNull, "Pnc.1
 bool TestPnc_ChunkPointer_Construct_VoidNull::RunTest(const FString& Parameters)
 {
     FIXSTART(Fix);
-    auto* chunk = new PNC::ChunkPointer();
+    auto* chunk = new Ni::Containers::NChunkPointer();
     UTEST_TRUE(TEXT("Chunk is Void"), chunk->IsVoid());
     UTEST_TRUE(TEXT("Chunk is Null"), chunk->IsNull());
     UTEST_FALSE(TEXT("Chunk is Struct"), chunk->IsStruct());
@@ -26,7 +26,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_ChunkPointer_Construct_StructNull, "Pnc
 bool TestPnc_ChunkPointer_Construct_StructNull::RunTest(const FString& Parameters)
 {
     FIXSTART(Fix);
-    auto* chunk = new PNC::ChunkPointer(&fix.Data->StructureABVW);
+    auto* chunk = new Ni::Containers::NChunkPointer(&fix.Data->StructureABVW);
     UTEST_FALSE(TEXT("Chunk is Void"), chunk->IsVoid());
     UTEST_TRUE(TEXT("Chunk is Null"), chunk->IsNull());
     UTEST_TRUE(TEXT("Chunk is Struct"), chunk->IsStruct());

@@ -1,12 +1,12 @@
 //#include "common.h"
 //#include "TestFixture.h"
 //
-//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_UniformChunkArray_Construct_StructData, "Pnc.3-UniformChunkArray.0-Construct-StructData", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_UniformChunkArray_Construct_StructData, "Pnc.3-NUniformArray.0-Construct-StructData", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 //bool TestPnc_UniformChunkArray_Construct_StructData::RunTest(const FString& Parameters)
 //{
 //    FIXSTART(Fix);
 //    ResetCallCounter();
-//    auto* uniformChunkArray = new PNC::UniformChunkArray(&fix.Data->StructureABVW, kSize_ChunkCount, kSize_NodeCount);
+//    auto* uniformChunkArray = new Ni::Containers::NUniformArray(&fix.Data->StructureABVW, kSize_ChunkCount, kSize_NodeCount);
 //    TEST_VALID_UNIFORMCHUNKARRAY_STRUCTDATA(*uniformChunkArray, kSize_ChunkCount, kSize_NodeCount);
 //    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_ChunkCount * kSize_NodeCount);
 //    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
