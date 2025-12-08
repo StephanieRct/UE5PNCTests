@@ -6,11 +6,11 @@
 
 // TODO ChunkPointer.Construct VoidData
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_ChunkPointer_Construct_VoidNull, "Pnc.1-ChunkPointer.0-Construct-VoidNull", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_ChunkPointer_Construct_VoidNull::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_ChunkPointer_Construct_VoidNull, "Ni.1-ChunkPointer.0-Construct-VoidNull", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestNi_ChunkPointer_Construct_VoidNull::RunTest(const FString& Parameters)
 {
     FIXSTART(Fix);
-    auto* chunk = new Ni::Containers::NChunkPointer();
+    auto* chunk = new Ni::NChunkPointer();
     UTEST_TRUE(TEXT("Chunk is Void"), chunk->IsVoid());
     UTEST_TRUE(TEXT("Chunk is Null"), chunk->IsNull());
     UTEST_FALSE(TEXT("Chunk is Struct"), chunk->IsStruct());
@@ -22,11 +22,11 @@ bool TestPnc_ChunkPointer_Construct_VoidNull::RunTest(const FString& Parameters)
     delete chunk;
     FIXEND;
 }
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_ChunkPointer_Construct_StructNull, "Pnc.1-ChunkPointer.0-Construct-StructNull", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_ChunkPointer_Construct_StructNull::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_ChunkPointer_Construct_StructNull, "Ni.1-ChunkPointer.0-Construct-StructNull", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestNi_ChunkPointer_Construct_StructNull::RunTest(const FString& Parameters)
 {
     FIXSTART(Fix);
-    auto* chunk = new Ni::Containers::NChunkPointer(&fix.Data->StructureABVW);
+    auto* chunk = new Ni::NChunkPointer(&fix.Data->StructureABVW);
     UTEST_FALSE(TEXT("Chunk is Void"), chunk->IsVoid());
     UTEST_TRUE(TEXT("Chunk is Null"), chunk->IsNull());
     UTEST_TRUE(TEXT("Chunk is Struct"), chunk->IsStruct());

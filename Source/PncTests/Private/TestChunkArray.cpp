@@ -1,15 +1,15 @@
 #include "common.h"
 #include "TestFixture.h"
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_ChunkArray_Construct_StructData, "Pnc.3-ChunkArray.0-Construct-StructData", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_ChunkArray_Construct_StructData::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_ChunkArray_Construct_StructData, "Ni.3-ChunkArray.0-Construct-StructData", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestNi_ChunkArray_Construct_StructData::RunTest(const FString& Parameters)
 {
     FIXSTART(Fix);
     ResetCallCounter();
-    //auto* chunkArray = new Ni::Containers::NArray(&fix.Data->StructureABVW, kSize_ChunkCapacity, kSize_ChunkCount, kSize_NodeCapacity, kSize_NodeCount);
-    auto* chunkArray = new Ni::Containers::NArray(&fix.Data->StructureABVW, kSize_ChunkCount, kSize_NodeCountPerChunk);
+    //auto* chunkArray = new Ni::NArray(&fix.Data->StructureABVW, kSize_ChunkCapacity, kSize_ChunkCount, kSize_NodeCapacity, kSize_NodeCount);
+    auto* chunkArray = new Ni::NArray(&fix.Data->StructureABVW, kSize_ChunkCount, kSize_NodeCountPerChunk);
 
-    auto& internalChunkArray = Ni::Containers::NArrayPointer::GetInternalChunk(*chunkArray);
+    auto& internalChunkArray = Ni::NArrayPointer::GetInternalChunk(*chunkArray);
     TEST_VALID_CHUNKARRAY_STRUCTDATA(*chunkArray, kSize_ChunkCount, kSize_ChunkCount * kSize_NodeCountPerChunk);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_ChunkCount * kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
@@ -41,14 +41,14 @@ bool TestPnc_ChunkArray_Construct_StructData::RunTest(const FString& Parameters)
     FIXEND;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_ChunkArray_Construct_StructData_EmptyChunks, "Pnc.3-ChunkArray.0-Construct-StructData-EmptyChunks", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_ChunkArray_Construct_StructData_EmptyChunks::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_ChunkArray_Construct_StructData_EmptyChunks, "Ni.3-ChunkArray.0-Construct-StructData-EmptyChunks", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestNi_ChunkArray_Construct_StructData_EmptyChunks::RunTest(const FString& Parameters)
 {
     FIXSTART(Fix);
     ResetCallCounter();
-    auto* chunkArray = new Ni::Containers::NArray(&fix.Data->StructureABVW, kSize_ChunkCount, kSize_NodeCountPerChunk_0, kSize_ChunkCount * kSize_NodeCountPerChunk);
+    auto* chunkArray = new Ni::NArray(&fix.Data->StructureABVW, kSize_ChunkCount, kSize_NodeCountPerChunk_0, kSize_ChunkCount * kSize_NodeCountPerChunk);
 
-    auto& internalChunkArray = Ni::Containers::NArrayPointer::GetInternalChunk(*chunkArray);
+    auto& internalChunkArray = Ni::NArrayPointer::GetInternalChunk(*chunkArray);
     TEST_VALID_CHUNKARRAY_STRUCTDATA(*chunkArray, kSize_ChunkCount, kSize_NodeCount_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_ChunkCount * kSize_NodeCount_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
@@ -80,14 +80,14 @@ bool TestPnc_ChunkArray_Construct_StructData_EmptyChunks::RunTest(const FString&
     FIXEND;
 }
 //
-//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_ChunkArray_Construct_StructData_EmptyArray, "Pnc.3-NArray.0-Construct-StructData-EmptyArray", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-//bool TestPnc_ChunkArray_Construct_StructData_EmptyArray::RunTest(const FString& Parameters)
+//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_ChunkArray_Construct_StructData_EmptyArray, "Ni.3-NArray.0-Construct-StructData-EmptyArray", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+//bool TestNi_ChunkArray_Construct_StructData_EmptyArray::RunTest(const FString& Parameters)
 //{
 //    FIXSTART(Fix);
 //    ResetCallCounter();
-//    auto* chunkArray = new Ni::Containers::NArray(&fix.Data->StructureABVW, kSize_ChunkCapacity, kSize_ChunkCount_0, kSize_NodeCapacity, kSize_NodeCount);
+//    auto* chunkArray = new Ni::NArray(&fix.Data->StructureABVW, kSize_ChunkCapacity, kSize_ChunkCount_0, kSize_NodeCapacity, kSize_NodeCount);
 //
-//    auto& internalChunkArray = Ni::Containers::NArrayPointer::GetInternalChunk(*chunkArray);
+//    auto& internalChunkArray = Ni::NArrayPointer::GetInternalChunk(*chunkArray);
 //    TEST_VALID_CHUNKARRAY_STRUCTDATA(*chunkArray, kSize_NodeCapacity * kSize_ChunkCapacity, kSize_ChunkCapacity, kSize_ChunkCount_0);
 //    UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_ChunkCount_0 * kSize_NodeCount);
 //    UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);

@@ -4,4 +4,4 @@
 
 #include "CoreMinimal.h"
 #include "FunctionalTest.h"
-#include "UE5PNC/public/PncDefault.h"
+#include "UE5PNC/public/Ni.h"
