@@ -8,70 +8,9 @@ void ResetCallCounter()
 {
     CallCounter::Instance.Reset();
 }
-//
-//void TestAssert()
-//{
-//    pnc_assert(false == true);
-//}
-//void TestAssertf(int a)
-//{
-//    pnc_assertf(false == true, TEXT("This is my assertf with argument of value '%d'"), a);
-//}
-//void TestAssertNoEntry()
-//{
-//    pnc_assert_no_entry_return();
-//}
-//
-//IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Fixture_Exceptions, "Pnc.0Fixture.Exceptions", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-//bool TestPnc_Fixture_Exceptions::RunTest(const FString& Parameters)
-//{
-//    try
-//    {
-//        TestAssert();
-//        UTEST_TRUE(TEXT("pnc_assert must throw an execption"), false);
-//    }
-//    catch (const FString& msg)
-//    {
-//        UE_LOG(LogTemp, Log, TEXT("Catch execption '%s'"), *msg);
-//    }
-//    catch(...)
-//    {
-//        UTEST_TRUE(TEXT("pnc_assert throws unknown execption, should be a FString"), false);
-//    }
-//
-//    try
-//    {
-//        TestAssertf(5);
-//        UTEST_TRUE(TEXT("pnc_assertf must throw an execption"), false);
-//    }
-//    catch (const FString& msg)
-//    {
-//        UE_LOG(LogTemp, Log, TEXT("Catch execption '%s'"), *msg);
-//    }
-//    catch (...)
-//    {
-//        UTEST_TRUE(TEXT("pnc_assertf throws unknown execption, should be a FString"), false);
-//    }
-//
-//    try
-//    {
-//        TestAssertNoEntry();
-//        UTEST_TRUE(TEXT("pnc_assert_no_entry_return must throw an execption"), false);
-//    }
-//    catch (const FString& msg)
-//    {
-//        UE_LOG(LogTemp, Log, TEXT("Catch execption '%s'"), *msg);
-//    }
-//    catch (...)
-//    {
-//        UTEST_TRUE(TEXT("pnc_assert_no_entry_return throws unknown execption, should be a FString"), false);
-//    }
-//
-//    return true;
-//}
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Fixture_Data, "Pnc.0Fixture.Data", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
-bool TestPnc_Fixture_Data::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_Fixture_Data, "Ni.0Fixture.Data", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool TestNi_Fixture_Data::RunTest(const FString& Parameters)
 {
     FIXSTART(Fix);
     UTEST_EQUAL(TEXT("StructureA Component Type A index"), fix.Data->StructureA.GetComponentTypeIndexInChunk(&fix.Data->ComponentTypeA), 0);
@@ -191,14 +130,14 @@ struct StrideBuffer
     void Allocate()
     {
         Free();
-        Buffer = (uint8*)pnc_alloc(GetBufferSize(), CacheLineSize);
+        Buffer = (uint8*)ni_alloc(GetBufferSize(), CacheLineSize);
         WriteIndex();
         OwnBuffer = true;
     }
     void Free()
     {
         if (Buffer.IsValid() && OwnBuffer)
-            pnc_free_dirty(Buffer.Ptr, GetBufferSize(), CacheLineSize);
+            ni_free_dirty(Buffer.Ptr, GetBufferSize(), CacheLineSize);
         Buffer = nullptr;
         OwnBuffer = false;
     }
@@ -234,8 +173,8 @@ void swap(StrideBuffer& a, StrideBuffer& b)
 
 }
 //EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Pnc_Perf_CacheStride, "PncPerf.CacheStride", EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter)
-bool TestPnc_Pnc_Perf_CacheStride::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_Pnc_Perf_CacheStride, "PncPerf.CacheStride", EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter)
+bool TestNi_Pnc_Perf_CacheStride::RunTest(const FString& Parameters)
 {
     constexpr std::size_t kIterationCount = 128;
     constexpr std::size_t kCacheLineSize = 64;
@@ -247,7 +186,7 @@ bool TestPnc_Pnc_Perf_CacheStride::RunTest(const FString& Parameters)
 
     size_t bufferSize = kCacheLineSize * kMaxStrideCacheLine * kMulStrideCacheLine * kStrideCount ;
     UTEST_LESS_EQUAL("buffer size", bufferSize, 1024 * 1024 * 1024);
-    uint8* buffer = (uint8*)pnc_alloc(bufferSize, kCacheLineSize);
+    uint8* buffer = (uint8*)ni_alloc(bufferSize, kCacheLineSize);
     std::vector< StrideBuffer> tests;
     for (std::size_t iStride = kMinStrideCacheLine; iStride < kMaxStrideCacheLine+1; ++iStride)
     {
@@ -322,13 +261,13 @@ bool TestPnc_Pnc_Perf_CacheStride::RunTest(const FString& Parameters)
         this->AddInfo(FString::Printf(TEXT("%10d\t%-10.2f\t%-10.2f\t%-10.2f\t%-10.2f\t%10d\t%10d\t%-10d"), test.StrideCacheLine, test.Average, test.StdDeviation, test.Min, test.Max, test.GetBufferSize(), test.StrideCacheLine * kCacheLineSize, test.Result));
         test.Free();
     }
-    pnc_free_dirty(buffer, bufferSize, kCacheLineSize);
+    ni_free_dirty(buffer, bufferSize, kCacheLineSize);
     return true;
 }
 
 //EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestPnc_Pnc_Perf_SequentialRead, "PncPerf.SequentialRead", EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter)
-bool TestPnc_Pnc_Perf_SequentialRead::RunTest(const FString& Parameters)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_Pnc_Perf_SequentialRead, "PncPerf.SequentialRead", EAutomationTestFlags::EditorContext | EAutomationTestFlags::PerfFilter)
+bool TestNi_Pnc_Perf_SequentialRead::RunTest(const FString& Parameters)
 {
     struct TestStride
     {
@@ -358,12 +297,12 @@ bool TestPnc_Pnc_Perf_SequentialRead::RunTest(const FString& Parameters)
     constexpr bool kReadNoise = true;
     uint32 totalNoiseSize = 0;
     uint32 currentStride = 0;
-    uint8* singleBuffer = (uint8*)pnc_alloc(kStrideMax * kReadCount, kAlignment);
+    uint8* singleBuffer = (uint8*)ni_alloc(kStrideMax * kReadCount, kAlignment);
     for (uint32 iNoise = 0; iNoise < kNoiseCount; ++iNoise)
     {
         uint32 noiseDataSize32 = 1024 * 32;
         totalNoiseSize += noiseDataSize32;
-        uint32* noiseData = (uint32*)pnc_alloc(noiseDataSize32 * sizeof(uint32), kAlignment);
+        uint32* noiseData = (uint32*)ni_alloc(noiseDataSize32 * sizeof(uint32), kAlignment);
         uint32 checksum = 0;
         for (uint32 k = 0; k < noiseDataSize32; ++k)
             checksum += noiseData[k] = k + 1;
@@ -375,7 +314,7 @@ bool TestPnc_Pnc_Perf_SequentialRead::RunTest(const FString& Parameters)
         {
             uint32 noiseDataSize32 =  (iNoise * iNoise * iNoise+512) % (1024-1) + 1;
             totalNoiseSize += noiseDataSize32;
-            uint32* noiseData = (uint32 *) pnc_alloc(noiseDataSize32 * sizeof(uint32), kAlignment);
+            uint32* noiseData = (uint32 *) ni_alloc(noiseDataSize32 * sizeof(uint32), kAlignment);
             uint32 checksum = 0;
             for (uint32 k = 0; k < noiseDataSize32; ++k)
                 checksum += noiseData[k] = k + 1;
@@ -385,7 +324,7 @@ bool TestPnc_Pnc_Perf_SequentialRead::RunTest(const FString& Parameters)
         currentStride += kStrideStep;
 
         uint32 dataSize = kReadCount * stride;
-        uint8* data = singleBuffer;// (uint8*)pnc_alloc(dataSize, kAlignment);
+        uint8* data = singleBuffer;// (uint8*)ni_alloc(dataSize, kAlignment);
         memset(data, 0, dataSize);
         tests.push_back(TestStride{ data, dataSize, stride });
 
@@ -444,13 +383,13 @@ bool TestPnc_Pnc_Perf_SequentialRead::RunTest(const FString& Parameters)
         this->AddInfo(message);
         //UE_LOG(LogTemp, Log, TEXT("%s"), *message);
 
-        //pnc_free_dirty(t.Data, t.DataSize, kAlignment);
+        //ni_free_dirty(t.Data, t.DataSize, kAlignment);
     }
     for (auto& noise : noises)
     {
-        pnc_free_dirty(noise.Data, noise.DataSize32 * sizeof(uint32), alignof(uint32));
+        ni_free_dirty(noise.Data, noise.DataSize32 * sizeof(uint32), alignof(uint32));
     }
-    pnc_free_dirty(singleBuffer, kStrideMax* kReadCount, kAlignment);
+    ni_free_dirty(singleBuffer, kStrideMax* kReadCount, kAlignment);
     
     return true;
 }
