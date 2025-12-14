@@ -61,7 +61,7 @@ bool TestNi_Chunk_MoveConstruction::RunTest(const FString& Parameters)
     auto allocationCountBefore = ni_allocation_count;
     auto* chunkTo = new Ni::NChunk(std::move(*chunkFrom));
     
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -99,7 +99,7 @@ bool TestNi_Chunk_MoveAssignment_Self::RunTest(const FString& Parameters)
     auto allocationCountBefore = ni_allocation_count;
     ResetCallCounter();
     *chunkFromAndTo = std::move(*chunkFromAndTo);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(*chunkFromAndTo, kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
@@ -138,7 +138,7 @@ bool TestNi_Chunk_MoveAssignment_VoidNull_StructData::RunTest(const FString& Par
     ResetCallCounter();
     auto allocationCountBefore = ni_allocation_count;
     *chunkTo = std::move(*chunkFrom);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -179,7 +179,7 @@ bool TestNi_Chunk_MoveAssignment_StructData_VoidNull::RunTest(const FString& Par
 
     ResetCallCounter();
     *chunkTo = std::move(*chunkFrom);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -219,7 +219,7 @@ bool TestNi_Chunk_MoveAssignment_StructData_StructData_SameStruct::RunTest(const
 
     ResetCallCounter();
     *chunkTo = std::move(*chunkFrom);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -259,7 +259,7 @@ bool TestNi_Chunk_MoveAssignment_StructData_StructData_DiffStruct::RunTest(const
 
     ResetCallCounter();
     *chunkTo = std::move(*chunkFrom);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -370,7 +370,7 @@ bool TestNi_Chunk_CopyAssignment_Self::RunTest(const FString& Parameters)
     auto allocationCountBefore = ni_allocation_count;
     ResetCallCounter();
     *chunkFromAndTo = *chunkFromAndTo;
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_CHUNKPOINTER_STRUCTDATA_N(*chunkFromAndTo, kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
@@ -445,7 +445,7 @@ bool TestNi_Chunk_CopyAssignment_StructData_VoidNull::RunTest(const FString& Par
 
     ResetCallCounter();
     *chunkTo = *chunkFrom;
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),    CallCounter::Instance.B.CopyCtor,   kSize_0);

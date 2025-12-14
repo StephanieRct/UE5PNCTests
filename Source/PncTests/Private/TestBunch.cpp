@@ -84,8 +84,8 @@ bool TestNi_Bunch_MoveConstruction::RunTest(const FString& Parameters)
     ResetCallCounter();
     auto allocationCountBefore = ni_allocation_count;
     auto* chunkTo = new Ni::NBunch(std::move(*chunkFrom));
-    
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -123,7 +123,7 @@ bool TestNi_Bunch_MoveAssignment_Self::RunTest(const FString& Parameters)
     auto allocationCountBefore = ni_allocation_count;
     ResetCallCounter();
     *chunkFromAndTo = std::move(*chunkFromAndTo);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkFromAndTo, kSize_NodeCount, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
@@ -161,7 +161,7 @@ bool TestNi_Bunch_MoveAssignment_VoidNull_StructData::RunTest(const FString& Par
     ResetCallCounter();
     auto allocationCountBefore = ni_allocation_count;
     *chunkTo = std::move(*chunkFrom);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -201,7 +201,7 @@ bool TestNi_Bunch_MoveAssignment_StructData_VoidNull::RunTest(const FString& Par
 
     ResetCallCounter();
     *chunkTo = std::move(*chunkFrom);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -242,7 +242,7 @@ bool TestNi_Bunch_MoveAssignment_StructData_StructData_SameStruct::RunTest(const
 
     ResetCallCounter();
     *chunkTo = std::move(*chunkFrom);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -282,7 +282,7 @@ bool TestNi_Bunch_MoveAssignment_StructData_StructData_DiffStruct::RunTest(const
 
     ResetCallCounter();
     *chunkTo = std::move(*chunkFrom);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -392,7 +392,7 @@ bool TestNi_Bunch_CopyAssignment_Self::RunTest(const FString& Parameters)
     auto allocationCountBefore = ni_allocation_count;
     ResetCallCounter();
     *chunkFromAndTo = *chunkFromAndTo;
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunkFromAndTo, kSize_NodeCount, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_0);
@@ -469,7 +469,7 @@ bool TestNi_Bunch_CopyAssignment_StructData_VoidNull::RunTest(const FString& Par
 
     ResetCallCounter();
     *chunkTo = *chunkFrom;
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_NodeCount);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),    CallCounter::Instance.B.CopyCtor,   kSize_0);
@@ -590,7 +590,7 @@ bool TestNi_Bunch_AddNode::RunTest(const FString& Parameters)
     ResetCallCounter();
     Ni::Size_t index = chunk->AddNodes(kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Added Node Index"), index, 0);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, kSize_NodeCapacity, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_0);
@@ -735,7 +735,7 @@ bool TestNi_Bunch_RemoveNode_All::RunTest(const FString& Parameters)
     auto allocationCountBefore = ni_allocation_count;
     ResetCallCounter();
     chunk->RemoveNode(0, kSize_NodeCapacity);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, kSize_0, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_NodeCapacity);
@@ -806,7 +806,7 @@ bool TestNi_Bunch_RemoveNode_Midsection::RunTest(const FString& Parameters)
     auto allocationCountBefore = ni_allocation_count;
     ResetCallCounter();
     chunk->RemoveNode(kSize_NodeCapacityMidStart, kSize_NodeCapacityMidCount);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, kSize_NodeCapacity - kSize_NodeCapacityMidCount, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_NodeCapacityMidCount);
@@ -893,7 +893,7 @@ bool TestNi_Bunch_RemoveNode_End::RunTest(const FString& Parameters)
     ResetCallCounter();
     chunk->RemoveNode(kSize_NodeCapacityBeginStart, kSize_NodeCapacityBeginCount);
     const Ni::Size_t newNodeCount = kSize_NodeCapacity - kSize_NodeCapacityBeginCount;
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, newNodeCount, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_NodeCapacityBeginCount);
@@ -975,7 +975,7 @@ bool TestNi_Bunch_RemoveNodeKeepOrder_Midsection::RunTest(const FString& Paramet
     auto allocationCountBefore = ni_allocation_count;
     ResetCallCounter();
     chunk->RemoveNodeKeepOrder(kSize_NodeCapacityMidStart, kSize_NodeCapacityMidCount);
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, kSize_NodeCapacity - kSize_NodeCapacityMidCount, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_NodeCapacityMidCount);
@@ -1057,7 +1057,7 @@ bool TestNi_Bunch_RemoveNodeKeepOrder_End::RunTest(const FString& Parameters)
     ResetCallCounter();
     chunk->RemoveNodeKeepOrder(kSize_NodeCapacityEndStart, kSize_NodeCapacityEndCount);
     const Ni::Size_t newNodeCount = kSize_NodeCapacity - kSize_NodeCapacityEndCount;
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, newNodeCount, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_NodeCapacityEndCount);
@@ -1115,7 +1115,7 @@ bool TestNi_Bunch_Clear::RunTest(const FString& Parameters)
     auto allocationCountBefore = ni_allocation_count;
     ResetCallCounter();
     chunk->Clear();
-    UTEST_EQUAL(TEXT("Allocation count"), ni_allocation_count - allocationCountBefore, 0);
+    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
     TEST_VALID_BUNCHPOINTER_STRUCTDATA(*chunk, 0, kSize_NodeCapacity);
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),         CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),          CallCounter::Instance.B.Dtor,       kSize_NodeCapacity);

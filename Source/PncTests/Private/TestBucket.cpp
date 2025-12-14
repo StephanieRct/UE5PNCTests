@@ -489,16 +489,28 @@ bool TestNi_Bucket_CopyAssignment_StructData_StructData_SameStruct::RunTest(cons
 {
     FIXSTART(Fix);
 
+    auto allocCount_ChunkFrom_Before = ni_allocation_count;
     auto* chunkFrom = new Ni::NBucket(&fix.Data->StructureABVW, kSize_NodeCapacity, kSize_NodeCount);
+    auto allocCount_ChunkFrom_After = ni_allocation_count;
+    auto allocCount_ChunkFrom = ni_allocation_count - allocCount_ChunkFrom_Before;
     TEST_VALID_BUCKETPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount, kSize_NodeCapacity);
 
-    auto allocationCountBefore = ni_allocation_count;
+    auto allocCount_ChunkTo_Before = ni_allocation_count;
     auto* chunkTo = new Ni::NBucket(&fix.Data->StructureABVW, kSize_NodeCapacityLow, kSize_NodeCountLow);
+    auto allocCount_ChunkTo_After = ni_allocation_count;
+    auto allocCount_ChunkTo = ni_allocation_count - allocCount_ChunkTo_Before;
     TEST_VALID_BUCKETPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCountLow, kSize_NodeCapacityLow);
 
     ResetCallCounter();
+    auto allocCount_Operation_Before = ni_allocation_count;
     *chunkTo = *chunkFrom;
-    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
+    auto allocCount_Operation_After = ni_allocation_count;
+    auto allocCount_Operation = ni_allocation_count - allocCount_Operation_Before;
+
+    // There should be 2 identical copy of chunkFrom in memory after the operation and no more copy of chunkTo.
+    auto allocCount_Final = ni_allocation_count - allocCount_ChunkFrom_Before;
+    TEST_ALLOCATION_EQUAL(allocCount_Final, 2 * allocCount_ChunkFrom);
+
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_NodeCount);
@@ -519,21 +531,34 @@ bool TestNi_Bucket_CopyAssignment_StructData_StructData_SameStruct::RunTest(cons
 
     FIXEND;
 }
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(TestNi_Bucket_CopyAssignment_StructData_StructData_DiffStruct, "Ni.3-Bucket.4-CopyAssignment-StructData-StructData-DiffStruct", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool TestNi_Bucket_CopyAssignment_StructData_StructData_DiffStruct::RunTest(const FString& Parameters)
 {
     FIXSTART(Fix);
 
+    auto allocCount_ChunkFrom_Before = ni_allocation_count;
     auto* chunkFrom = new Ni::NBucket(&fix.Data->StructureABVW, kSize_NodeCapacity, kSize_NodeCount);
+    auto allocCount_ChunkFrom_After = ni_allocation_count;
+    auto allocCount_ChunkFrom = ni_allocation_count - allocCount_ChunkFrom_Before;
     TEST_VALID_BUCKETPOINTER_STRUCTDATA(*chunkFrom, kSize_NodeCount, kSize_NodeCapacity);
 
-    auto allocationCountBefore = ni_allocation_count;
+    auto allocCount_ChunkTo_Before = ni_allocation_count;
     auto* chunkTo = new Ni::NBucket(&fix.Data->StructureBW, kSize_NodeCapacityLow, kSize_NodeCountLow);
+    auto allocCount_ChunkTo_After = ni_allocation_count;
+    auto allocCount_ChunkTo = ni_allocation_count - allocCount_ChunkTo_Before;
     TEST_VALID_BUCKETPOINTER_STRUCTDATA(*chunkTo, kSize_NodeCountLow, kSize_NodeCapacityLow);
 
     ResetCallCounter();
+    auto allocCount_Operation_Before = ni_allocation_count;
     *chunkTo = *chunkFrom;
-    TEST_ALLOCATION_EQUAL(ni_allocation_count - allocationCountBefore, 0);
+    auto allocCount_Operation_After = ni_allocation_count;
+    auto allocCount_Operation = ni_allocation_count - allocCount_Operation_Before;
+
+    // There should be 2 identical copy of chunkFrom in memory after the operation and no more copy of chunkTo.
+    auto allocCount_Final = ni_allocation_count - allocCount_ChunkFrom_Before;
+    TEST_ALLOCATION_EQUAL(allocCount_Final, 2 * allocCount_ChunkFrom);
+
     UTEST_EQUAL(TEXT("Calls to NodeComponent constructor"),        CallCounter::Instance.B.Ctor,       kSize_0);
     UTEST_EQUAL(TEXT("Calls to NodeComponent destructor"),         CallCounter::Instance.B.Dtor,       kSize_NodeCountLow);
     UTEST_EQUAL(TEXT("Calls to NodeComponent copy constructor"),   CallCounter::Instance.B.CopyCtor,   kSize_NodeCount);
